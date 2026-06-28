@@ -1,0 +1,91 @@
+[
+    {
+        "domain": ".chess.com",
+        "expirationDate": 1782623669.349214,
+        "hostOnly": false,
+        "httpOnly": true,
+        "name": "__cf_bm",
+        "path": "/",
+        "sameSite": "no_restriction",
+        "secure": true,
+        "session": false,
+        "storeId": null,
+        "value": "NYV301Mj5UVe9uyTfNm6FV0dVAKGotHrVUMY6QS1g5A-1782621869.0071158-1.0.1.1-z_zRjhqekLYpP4d.96htpUVuUdtV6rXwiuzf16w7glKN.O_jQHeYeHQ3lh9cOnEmT7rx9V5Spq8oW9ufuaQCDK52E2gy4Zh8fVv85GukUviLnEyyitU1UjMSlnsNc_IAIA.1rRPygEv0xpT_E6jDcQ"
+    },
+    {
+        "domain": ".chess.com",
+        "expirationDate": 1782623645.048058,
+        "hostOnly": false,
+        "httpOnly": false,
+        "name": "psid",
+        "path": "/",
+        "sameSite": "lax",
+        "secure": true,
+        "session": false,
+        "storeId": null,
+        "value": "fdcd3f3e-72ab-11f1-84a4-3d216064583c"
+    },
+    {
+        "domain": "www.chess.com",
+        "expirationDate": 1782623673,
+        "hostOnly": true,
+        "httpOnly": false,
+        "name": "psid",
+        "path": "/",
+        "sameSite": "no_restriction",
+        "secure": true,
+        "session": false,
+        "storeId": null,
+        "value": "fdcd3f3e-72ab-11f1-84a4-3d216064583c"
+    },
+    {
+        "domain": ".chess.com",
+        "expirationDate": 1782708268.26439,
+        "hostOnly": false,
+        "httpOnly": true,
+        "name": "ACCESS_TOKEN",
+        "path": "/",
+        "sameSite": "strict",
+        "secure": true,
+        "session": false,
+        "storeId": null,
+        "value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6IjU0OGRmOTcwZGEzYzRjMWFkNjAwYTk3NTg3YzIxM2E0MTkwYjNjZWYifQ.eyJhdWQiOiI4ZWVhMDExMC1mOWMxLTExZWYtOWNlNi03ZmQxMjYxMmEzZTMiLCJqdGkiOiJkMTVjNDU4MWYxNDZmNjQwZWFhMTg4OWRmNDliYjlhY2Y0Nzc5MDIxOWMwZGRiZmEwYmI5MDMyMTYyZWIxM2Q1ZDBkOTdlMDMzMTY0YWY0MyIsImlhdCI6MTc4MjYyMTg2OC4wNzkyNzcsIm5iZiI6MTc4MjYyMTg2OC4wNzkyNzksImV4cCI6MTc4MjcwODI2OC4wNzU3MDQsInN1YiI6IjgwM2Y4OTMyLWM3YWQtMTFlZi04YjAwLWJmYzgxZGVhZmMzZSIsInNjb3BlcyI6W10sImxvY2FsZSI6ImVuX1VTIn0.bSUQm-SeodAfJd0vv3qsW6FNIUaD0FvKdjpm5DComAO9FJDajqEvna3AU76JDlr-WwcASVTzeHw1HgjgrWAmH7mf8PWHbvjAu85H6T7WssdS4q3nbbFBPNmBD9XEE86mbhfembwVmVAwppnqTrBpZ4fyW2nVwTGgV6T8HUx__Q1oQC62icG7gs9Q008B0UKllU9CL2W1YvXYel4Ouf_LKNhA_T1_XgLsx0jTiPd6P6CaAuMSYFLM7mgq3tR5H4wWJRqtv0RsmsLekwG8S4YkmvRWlPDcMpdFusI2uUGRDRSiVtMac-es4UyyORPDTF105EGowUpIpAJ9E2ghxQnU0A"
+    },
+    {
+        "domain": ".chess.com",
+        "hostOnly": false,
+        "httpOnly": false,
+        "name": "BUCKETING_ID",
+        "path": "/",
+        "sameSite": "lax",
+        "secure": true,
+        "session": true,
+        "storeId": null,
+        "value": "0d486f13f0094732926dcd99010e5955"
+    },
+    {
+        "domain": ".chess.com",
+        "expirationDate": 1798173867.510435,
+        "hostOnly": false,
+        "httpOnly": true,
+        "name": "CHESSCOM_REMEMBERME",
+        "path": "/",
+        "sameSite": "lax",
+        "secure": true,
+        "session": false,
+        "storeId": null,
+        "value": "Chess.WebBundle.Entity.User%3AbWt2MTAx%3A1814157867%3AFUcr_zRZiJAsDU9qMqBlxBBJ5VKxSj5O60yNghv_zPU~YYSv3sLh60UTxKZHX7ITkndZoyWGm26-8CFJQgLPS18~"
+    },
+    {
+        "domain": ".chess.com",
+        "hostOnly": false,
+        "httpOnly": true,
+        "name": "PHPSESSID",
+        "path": "/",
+        "sameSite": "lax",
+        "secure": true,
+        "session": true,
+        "storeId": null,
+        "value": "c428327bda68d0274a1f32fa503942e8"
+    }
+]
