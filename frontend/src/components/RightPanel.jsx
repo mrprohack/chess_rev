@@ -53,6 +53,7 @@ export default function RightPanel({ gameData, setGameData, currentMoveIndex, se
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('review');
 
   const fetchGame = async () => {
     if (!url) return;
@@ -115,15 +116,29 @@ export default function RightPanel({ gameData, setGameData, currentMoveIndex, se
 
   const displayMoves = gameData ? movePairs : dummyMoves;
 
-  const counts = { brilliant: 0, great: 0, best: 0, excellent: 0, good: 0, inaccuracy: 0, mistake: 0, miss: 0, blunder: 0 };
+  const whiteCounts = { brilliant: 0, great: 0, best: 0, excellent: 0, good: 0, inaccuracy: 0, mistake: 0, miss: 0, blunder: 0, book: 0 };
+  const blackCounts = { brilliant: 0, great: 0, best: 0, excellent: 0, good: 0, inaccuracy: 0, mistake: 0, miss: 0, blunder: 0, book: 0 };
+  
   if (gameData && gameData.moves) {
     gameData.moves.forEach(m => {
       const cls = m.classification?.toLowerCase();
-      if (counts[cls] !== undefined) {
-        counts[cls]++;
-      }
+      if (m.color === 'white' && whiteCounts[cls] !== undefined) whiteCounts[cls]++;
+      if (m.color === 'black' && blackCounts[cls] !== undefined) blackCounts[cls]++;
     });
   }
+
+  const statRows = [
+    { label: 'Brilliant', key: 'brilliant', icon: '!!' },
+    { label: 'Great', key: 'great', icon: '!' },
+    { label: 'Best', key: 'best', icon: '★' },
+    { label: 'Excellent', key: 'excellent', icon: '👍' },
+    { label: 'Good', key: 'good', icon: '✔' },
+    { label: 'Inaccuracy', key: 'inaccuracy', icon: '?!' },
+    { label: 'Mistake', key: 'mistake', icon: '?' },
+    { label: 'Miss', key: 'miss', icon: '✖' },
+    { label: 'Blunder', key: 'blunder', icon: '??' },
+    { label: 'Book', key: 'book', icon: '📖' }
+  ];
 
   return (
     <div className="right-panel">
@@ -147,75 +162,137 @@ export default function RightPanel({ gameData, setGameData, currentMoveIndex, se
 
       {/* Secondary Tabs */}
       <div className="panel-tabs-secondary">
-        <div className="panel-tab-sec active">Moves</div>
-        <div className="panel-tab-sec">Analysis</div>
-        <div className="panel-tab-sec">Openings</div>
+        <div className={`panel-tab-sec ${activeTab === 'review' ? 'active' : ''}`} onClick={() => setActiveTab('review')}>Review</div>
+        <div className={`panel-tab-sec ${activeTab === 'moves' ? 'active' : ''}`} onClick={() => setActiveTab('moves')}>Moves</div>
+        <div className={`panel-tab-sec ${activeTab === 'analysis' ? 'active' : ''}`} onClick={() => setActiveTab('analysis')}>Analysis</div>
       </div>
 
-      {/* Engine Info */}
-      <div className="engine-info">
-        <span>Starting Position</span>
-        <span className="engine-name">
-          <Cpu size={11} /> Stockfish 18 Lite <Settings size={11} style={{ cursor: 'pointer' }} />
-        </span>
-      </div>
+      {activeTab === 'moves' && (
+        <>
+          {/* Engine Info */}
+          <div className="engine-info">
+            <span>Starting Position</span>
+            <span className="engine-name">
+              <Cpu size={11} /> Stockfish 18 Lite <Settings size={11} style={{ cursor: 'pointer' }} />
+            </span>
+          </div>
 
-      {/* Moves List */}
-      <div className="moves-list">
-        {displayMoves.map((m, idx) => (
-          <div key={idx} className="move-row">
-            <div className="move-num">{m.num}.</div>
+          {/* Moves List */}
+          <div className="moves-list">
+            {displayMoves.map((m, idx) => (
+              <div key={idx} className="move-row">
+                <div className="move-num">{m.num}.</div>
 
-            <div
-              className={`move-col ${currentMoveIndex === m.wIndex ? 'selected' : ''}`}
-              onClick={() => m.wIndex && setCurrentMoveIndex(m.wIndex)}
-            >
-                <div className="move-text">
-                {m.wClass && (
-                  <span className={`move-class-icon ${CLASS_COLORS[m.wClass?.toLowerCase()] || ''}`} title={m.wClass}>
-                    {getIcon(m.wClass)}
-                  </span>
-                )}
-                {renderSan(m.w, m.wClass)}
+                <div
+                  className={`move-col ${currentMoveIndex === m.wIndex ? 'selected' : ''}`}
+                  onClick={() => m.wIndex && setCurrentMoveIndex(m.wIndex)}
+                >
+                    <div className="move-text">
+                    {m.wClass && (
+                      <span className={`move-class-icon ${CLASS_COLORS[m.wClass?.toLowerCase()] || ''}`} title={m.wClass}>
+                        {getIcon(m.wClass)}
+                      </span>
+                    )}
+                    {renderSan(m.w, m.wClass)}
+                  </div>
+                  <div className="move-time">
+                    <div className="time-bar"></div>
+                    <span>{m.wTime || ''}</span>
+                  </div>
+                </div>
+
+                <div
+                  className={`move-col ${currentMoveIndex === m.bIndex ? 'selected' : ''}`}
+                  onClick={() => m.bIndex && setCurrentMoveIndex(m.bIndex)}
+                >
+                    <div className="move-text">
+                    {m.bClass && (
+                      <span className={`move-class-icon ${CLASS_COLORS[m.bClass?.toLowerCase()] || ''}`} title={m.bClass}>
+                        {getIcon(m.bClass)}
+                      </span>
+                    )}
+                    {renderSan(m.b, m.bClass)}
+                  </div>
+                  <div className="move-time">
+                    <div className="time-bar"></div>
+                    <span>{m.bTime || ''}</span>
+                  </div>
+                </div>
               </div>
-              <div className="move-time">
-                <div className="time-bar"></div>
-                <span>{m.wTime || ''}</span>
-              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {activeTab === 'review' && (
+        <div className="review-tab">
+          <div className="review-header-title">
+            <span style={{color: '#86efac', marginRight: '6px', fontSize: '1.2rem'}}>🔍</span> Game Review
+          </div>
+          
+          <div className="review-accuracy-section">
+            <div className="acc-labels">
+              <span className="acc-label-text">Players</span>
+              <span className="acc-label-text">Accuracy</span>
             </div>
-
-            <div
-              className={`move-col ${currentMoveIndex === m.bIndex ? 'selected' : ''}`}
-              onClick={() => m.bIndex && setCurrentMoveIndex(m.bIndex)}
-            >
-                <div className="move-text">
-                {m.bClass && (
-                  <span className={`move-class-icon ${CLASS_COLORS[m.bClass?.toLowerCase()] || ''}`} title={m.bClass}>
-                    {getIcon(m.bClass)}
-                  </span>
-                )}
-                {renderSan(m.b, m.bClass)}
-              </div>
-              <div className="move-time">
-                <div className="time-bar"></div>
-                <span>{m.bTime || ''}</span>
-              </div>
+            <div className="acc-player-col">
+              <div className="acc-avatar" style={{background: '#d4a843'}}></div>
+              <div className="acc-box white">85.3</div>
+            </div>
+            <div className="acc-player-col">
+              <div className="acc-avatar" style={{background: '#5b7fa6'}}></div>
+              <div className="acc-box black">62.3</div>
             </div>
           </div>
-        ))}
 
-        <div className="badge-row">
-          {counts.brilliant > 0 && <span className="badge brilliant">!! {counts.brilliant} Brilliant</span>}
-          {counts.great > 0 && <span className="badge great">! {counts.great} Great</span>}
-          {counts.best > 0 && <span className="badge best">★ {counts.best} Best</span>}
-          {counts.excellent > 0 && <span className="badge excellent">👍 {counts.excellent} Excellent</span>}
-          {counts.good > 0 && <span className="badge good">✔ {counts.good} Good</span>}
-          {counts.inaccuracy > 0 && <span className="badge inaccuracy">?! {counts.inaccuracy} Inaccuracy</span>}
-          {counts.mistake > 0 && <span className="badge mistake">? {counts.mistake} Mistake</span>}
-          {counts.miss > 0 && <span className="badge miss">✖ {counts.miss} Miss</span>}
-          {counts.blunder > 0 && <span className="badge blunder">?? {counts.blunder} Blunder</span>}
+          <div className="review-divider"></div>
+
+          <div className="stats-container">
+            {statRows.map((row) => {
+              const w = whiteCounts[row.key];
+              const b = blackCounts[row.key];
+              if (w === 0 && b === 0 && row.key !== 'best' && row.key !== 'blunder') return null;
+              return (
+                <div key={row.key} className="stat-row">
+                  <div className="stat-label">{row.label}</div>
+                  <div className={`stat-white ${row.key}`}>{w}</div>
+                  <div className={`stat-icon ${CLASS_COLORS[row.key]}`}>{row.icon}</div>
+                  <div className={`stat-black ${row.key}`}>{b}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="review-divider"></div>
+
+          <div className="rating-row">
+            <span className="rating-label">Game Rating</span>
+            <div className="acc-box white">1400</div>
+            <div className="acc-box black">500</div>
+          </div>
+          
+          <div className="phase-row">
+            <span className="phase-label">Opening</span>
+            <span className="phase-icon good">👍</span>
+            <span className="phase-icon excellent">✔</span>
+          </div>
+          <div className="phase-row">
+            <span className="phase-label">Middlegame</span>
+            <span className="phase-icon great">!</span>
+            <span className="phase-icon inaccuracy">?!</span>
+          </div>
+          <div className="phase-row">
+            <span className="phase-label">Endgame</span>
+            <span className="phase-icon none">-</span>
+            <span className="phase-icon none">-</span>
+          </div>
+
+          <div className="review-actions">
+            <button className="btn-secondary">New 10 min</button>
+            <button className="btn-primary">Start Review</button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Footer Controls */}
       <div className="panel-footer">
