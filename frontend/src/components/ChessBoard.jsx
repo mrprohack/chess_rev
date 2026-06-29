@@ -38,7 +38,7 @@ function parseFenRows(rows, board) {
   return board;
 }
 
-export default function ChessBoard({ fen = 'start' }) {
+export default function ChessBoard({ fen = 'start', bestMove, playedMove, classification }) {
   const board = parseFen(fen);
   const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
   const ranks = [8, 7, 6, 5, 4, 3, 2, 1];
@@ -47,17 +47,37 @@ export default function ChessBoard({ fen = 'start' }) {
   const LIGHT = '#F0D9B5';
   const DARK = '#B58863';
 
+  function uciToCoords(uci) {
+    if (!uci || uci.length < 4) return null;
+    const f1 = files.indexOf(uci[0]);
+    const r1 = parseInt(uci[1], 10);
+    const f2 = files.indexOf(uci[2]);
+    const r2 = parseInt(uci[3], 10);
+    
+    if (f1 < 0 || r1 < 1 || r1 > 8 || f2 < 0 || r2 < 1 || r2 > 8) return null;
+    
+    return {
+      x1: `${(f1 + 0.5) * 12.5}%`,
+      y1: `${(8 - r1 + 0.5) * 12.5}%`,
+      x2: `${(f2 + 0.5) * 12.5}%`,
+      y2: `${(8 - r2 + 0.5) * 12.5}%`,
+    };
+  }
+
+  const bestCoords = uciToCoords(bestMove);
+  const playedCoords = uciToCoords(playedMove);
+  
+  const isMistake = classification && ['mistake', 'blunder', 'miss'].includes(classification.toLowerCase());
+
   return (
-    <div style={{
+    <div style={{ position: 'relative', width: '100%', aspectRatio: '1', borderRadius: '4px', overflow: 'hidden', boxShadow: '0 0 0 2px rgba(0,0,0,0.5), 0 8px 32px rgba(0,0,0,0.5)' }}>
+      <div style={{
       display: 'grid',
       gridTemplateColumns: '18px repeat(8, 1fr)',
       gridTemplateRows: 'repeat(8, 1fr) 18px',
       width: '100%',
-      aspectRatio: '1',
+      height: '100%',
       userSelect: 'none',
-      borderRadius: '4px',
-      overflow: 'hidden',
-      boxShadow: '0 0 0 2px rgba(0,0,0,0.5), 0 8px 32px rgba(0,0,0,0.5)',
     }}>
       {ranks.map((rank, rankIdx) => (
         <React.Fragment key={rank}>
@@ -137,6 +157,55 @@ export default function ChessBoard({ fen = 'start' }) {
           {file}
         </div>
       ))}
+      </div>
+      
+      {/* SVG Arrow Overlay */}
+      <svg style={{
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        bottom: '18px',
+        left: '18px',
+        pointerEvents: 'none',
+        zIndex: 10,
+        width: 'calc(100% - 18px)',
+        height: 'calc(100% - 18px)'
+      }}>
+        <defs>
+          <marker id="arrow-green" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#4ade80" opacity="0.8" />
+          </marker>
+          <marker id="arrow-red" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#f87171" opacity="0.8" />
+          </marker>
+        </defs>
+
+        {/* Draw Played Move if Mistake */}
+        {isMistake && playedCoords && (
+          <line
+            x1={playedCoords.x1} y1={playedCoords.y1}
+            x2={playedCoords.x2} y2={playedCoords.y2}
+            stroke="#f87171"
+            strokeWidth="12"
+            strokeLinecap="round"
+            opacity="0.8"
+            markerEnd="url(#arrow-red)"
+          />
+        )}
+        
+        {/* Draw Best Move */}
+        {(isMistake || (playedMove !== bestMove && bestCoords)) && bestCoords && (
+          <line
+            x1={bestCoords.x1} y1={bestCoords.y1}
+            x2={bestCoords.x2} y2={bestCoords.y2}
+            stroke="#4ade80"
+            strokeWidth="12"
+            strokeLinecap="round"
+            opacity="0.8"
+            markerEnd="url(#arrow-green)"
+          />
+        )}
+      </svg>
     </div>
   );
 }

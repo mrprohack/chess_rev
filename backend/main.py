@@ -54,13 +54,17 @@ def parse_pgn(pgn_str: str):
     while node.variations:
         # Evaluate before move
         score_before = 0
+        best_move_uci = None
         if engine:
             info = engine.analyse(board, chess.engine.Limit(depth=10))
             score_before = info["score"].white().score(mate_score=10000)
+            if "pv" in info and len(info["pv"]) > 0:
+                best_move_uci = info["pv"][0].uci()
             
         next_node = node.variation(0)
         move = next_node.move
         san_move = board.san(move)
+        played_move_uci = move.uci()
         board.push(move)
         
         # Evaluate after move
@@ -125,7 +129,9 @@ def parse_pgn(pgn_str: str):
             "fen": board.fen(),
             "time": time_str,
             "eval": score_after / 100 if engine else 0,
-            "clock": current_clock if current_clock is not None else 600
+            "clock": current_clock if current_clock is not None else 600,
+            "played_move": played_move_uci,
+            "best_move": best_move_uci
         })
         
         if classification:

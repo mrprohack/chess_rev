@@ -53,7 +53,6 @@ export default function RightPanel({ gameData, setGameData, currentMoveIndex, se
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('review');
 
   const fetchGame = async () => {
     if (!url) return;
@@ -162,137 +161,79 @@ export default function RightPanel({ gameData, setGameData, currentMoveIndex, se
 
       {/* Secondary Tabs */}
       <div className="panel-tabs-secondary">
-        <div className={`panel-tab-sec ${activeTab === 'review' ? 'active' : ''}`} onClick={() => setActiveTab('review')}>Review</div>
-        <div className={`panel-tab-sec ${activeTab === 'moves' ? 'active' : ''}`} onClick={() => setActiveTab('moves')}>Moves</div>
-        <div className={`panel-tab-sec ${activeTab === 'analysis' ? 'active' : ''}`} onClick={() => setActiveTab('analysis')}>Analysis</div>
+        <div className="panel-tab-sec active">Moves</div>
+        <div className="panel-tab-sec">Analysis</div>
+        <div className="panel-tab-sec">Openings</div>
       </div>
 
-      {activeTab === 'moves' && (
-        <>
-          {/* Engine Info */}
-          <div className="engine-info">
-            <span>Starting Position</span>
-            <span className="engine-name">
-              <Cpu size={11} /> Stockfish 18 Lite <Settings size={11} style={{ cursor: 'pointer' }} />
-            </span>
-          </div>
+      {/* Engine Info */}
+      <div className="engine-info">
+        <span>Starting Position</span>
+        <span className="engine-name">
+          <Cpu size={11} /> Stockfish 18 Lite <Settings size={11} style={{ cursor: 'pointer' }} />
+        </span>
+      </div>
 
-          {/* Moves List */}
-          <div className="moves-list">
-            {displayMoves.map((m, idx) => (
-              <div key={idx} className="move-row">
-                <div className="move-num">{m.num}.</div>
+      {/* Moves List */}
+      <div className="moves-list">
+        {displayMoves.map((m, idx) => (
+          <div key={idx} className="move-row">
+            <div className="move-num">{m.num}.</div>
 
-                <div
-                  className={`move-col ${currentMoveIndex === m.wIndex ? 'selected' : ''}`}
-                  onClick={() => m.wIndex && setCurrentMoveIndex(m.wIndex)}
-                >
-                    <div className="move-text">
-                    {m.wClass && (
-                      <span className={`move-class-icon ${CLASS_COLORS[m.wClass?.toLowerCase()] || ''}`} title={m.wClass}>
-                        {getIcon(m.wClass)}
-                      </span>
-                    )}
-                    {renderSan(m.w, m.wClass)}
-                  </div>
-                  <div className="move-time">
-                    <div className="time-bar"></div>
-                    <span>{m.wTime || ''}</span>
-                  </div>
-                </div>
-
-                <div
-                  className={`move-col ${currentMoveIndex === m.bIndex ? 'selected' : ''}`}
-                  onClick={() => m.bIndex && setCurrentMoveIndex(m.bIndex)}
-                >
-                    <div className="move-text">
-                    {m.bClass && (
-                      <span className={`move-class-icon ${CLASS_COLORS[m.bClass?.toLowerCase()] || ''}`} title={m.bClass}>
-                        {getIcon(m.bClass)}
-                      </span>
-                    )}
-                    {renderSan(m.b, m.bClass)}
-                  </div>
-                  <div className="move-time">
-                    <div className="time-bar"></div>
-                    <span>{m.bTime || ''}</span>
-                  </div>
-                </div>
+            <div
+              className={`move-col ${currentMoveIndex === m.wIndex ? 'selected' : ''}`}
+              onClick={() => m.wIndex && setCurrentMoveIndex(m.wIndex)}
+            >
+                <div className="move-text">
+                {m.wClass && (
+                  <span className={`move-class-icon ${CLASS_COLORS[m.wClass?.toLowerCase()] || ''}`} title={m.wClass}>
+                    {getIcon(m.wClass)}
+                  </span>
+                )}
+                {renderSan(m.w, m.wClass)}
               </div>
-            ))}
-          </div>
-        </>
-      )}
-
-      {activeTab === 'review' && (
-        <div className="review-tab">
-          <div className="review-header-title">
-            <span style={{color: '#86efac', marginRight: '6px', fontSize: '1.2rem'}}>🔍</span> Game Review
-          </div>
-          
-          <div className="review-accuracy-section">
-            <div className="acc-labels">
-              <span className="acc-label-text">Players</span>
-              <span className="acc-label-text">Accuracy</span>
+              <div className="move-time">
+                <div className="time-bar"></div>
+                <span>{m.wTime || ''}</span>
+              </div>
             </div>
-            <div className="acc-player-col">
-              <div className="acc-avatar" style={{background: '#d4a843'}}></div>
-              <div className="acc-box white">85.3</div>
+
+            <div
+              className={`move-col ${currentMoveIndex === m.bIndex ? 'selected' : ''}`}
+              onClick={() => m.bIndex && setCurrentMoveIndex(m.bIndex)}
+            >
+                <div className="move-text">
+                {m.bClass && (
+                  <span className={`move-class-icon ${CLASS_COLORS[m.bClass?.toLowerCase()] || ''}`} title={m.bClass}>
+                    {getIcon(m.bClass)}
+                  </span>
+                )}
+                {renderSan(m.b, m.bClass)}
+              </div>
+              <div className="move-time">
+                <div className="time-bar"></div>
+                <span>{m.bTime || ''}</span>
+              </div>
             </div>
-            <div className="acc-player-col">
-              <div className="acc-avatar" style={{background: '#5b7fa6'}}></div>
-              <div className="acc-box black">62.3</div>
-            </div>
           </div>
+        ))}
 
-          <div className="review-divider"></div>
-
-          <div className="stats-container">
-            {statRows.map((row) => {
-              const w = whiteCounts[row.key];
-              const b = blackCounts[row.key];
-              if (w === 0 && b === 0 && row.key !== 'best' && row.key !== 'blunder') return null;
-              return (
-                <div key={row.key} className="stat-row">
-                  <div className="stat-label">{row.label}</div>
-                  <div className={`stat-white ${row.key}`}>{w}</div>
-                  <div className={`stat-icon ${CLASS_COLORS[row.key]}`}>{row.icon}</div>
-                  <div className={`stat-black ${row.key}`}>{b}</div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="review-divider"></div>
-
-          <div className="rating-row">
-            <span className="rating-label">Game Rating</span>
-            <div className="acc-box white">1400</div>
-            <div className="acc-box black">500</div>
-          </div>
-          
-          <div className="phase-row">
-            <span className="phase-label">Opening</span>
-            <span className="phase-icon good">👍</span>
-            <span className="phase-icon excellent">✔</span>
-          </div>
-          <div className="phase-row">
-            <span className="phase-label">Middlegame</span>
-            <span className="phase-icon great">!</span>
-            <span className="phase-icon inaccuracy">?!</span>
-          </div>
-          <div className="phase-row">
-            <span className="phase-label">Endgame</span>
-            <span className="phase-icon none">-</span>
-            <span className="phase-icon none">-</span>
-          </div>
-
-          <div className="review-actions">
-            <button className="btn-secondary">New 10 min</button>
-            <button className="btn-primary">Start Review</button>
-          </div>
+        <div className="stats-container">
+          {statRows.map((row) => {
+            const w = whiteCounts[row.key];
+            const b = blackCounts[row.key];
+            if (w === 0 && b === 0 && row.key !== 'best' && row.key !== 'blunder') return null; // hide empty rows mostly
+            return (
+              <div key={row.key} className="stat-row">
+                <div className="stat-label">{row.label}</div>
+                <div className={`stat-white ${row.key}`}>{w}</div>
+                <div className={`stat-icon ${CLASS_COLORS[row.key]}`}>{row.icon}</div>
+                <div className={`stat-black ${row.key}`}>{b}</div>
+              </div>
+            );
+          })}
         </div>
-      )}
+      </div>
 
       {/* Footer Controls */}
       <div className="panel-footer">

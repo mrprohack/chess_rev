@@ -13,12 +13,18 @@ export default function BoardArea({ gameData, currentMoveIndex = 0 }) {
   let baseTime = gameData ? gameData.base_time : 600;
   let selfClock = baseTime;
   let oppClock = baseTime;
+  let currentBestMove = null;
+  let currentPlayedMove = null;
+  let currentClassification = null;
 
   if (gameData && gameData.moves && currentMoveIndex > 0) {
     const moveIndex = currentMoveIndex - 1;
     if (moveIndex < gameData.moves.length) {
       currentFen = gameData.moves[moveIndex].fen || 'start';
       currentScore = gameData.moves[moveIndex].eval || 0;
+      currentBestMove = gameData.moves[moveIndex].best_move;
+      currentPlayedMove = gameData.moves[moveIndex].played_move;
+      currentClassification = gameData.moves[moveIndex].classification;
     }
     
     // Find latest clock for both players up to current move
@@ -41,7 +47,12 @@ export default function BoardArea({ gameData, currentMoveIndex = 0 }) {
       {/* The Chess Board */}
       <div className="board-wrapper">
         <EvalBar score={currentScore} />
-        <ChessBoard fen={currentFen} />
+        <ChessBoard 
+          fen={currentFen} 
+          bestMove={currentBestMove} 
+          playedMove={currentPlayedMove}
+          classification={currentClassification}
+        />
       </div>
 
       {/* Bottom Player (Self / White) */}
