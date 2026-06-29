@@ -89,15 +89,19 @@ def parse_pgn(pgn_str: str):
             
         if not classification:
             if engine:
-                if cp_loss <= -4: classification = "Great"
-                elif cp_loss <= 3: classification = "Best"
-                elif cp_loss <= 8: classification = "Excellent"
-                elif cp_loss <= 15: classification = "Good"
-                elif cp_loss <= 50: classification = "Inaccuracy"
-                elif cp_loss <= 150: classification = "Mistake"
+                if cp_loss <= -200: classification = "Great"
+                elif cp_loss <= 15: classification = "Best"
+                elif cp_loss <= 40: classification = "Excellent"
+                elif cp_loss <= 80: classification = "Good"
+                elif cp_loss <= 150: classification = "Inaccuracy"
+                elif cp_loss <= 300: classification = "Mistake"
                 else: classification = "Blunder"
             else:
                 classification = "Best" # fallback if engine fails
+                
+        # Basic Opening Book simulation (first 5 moves)
+        if move_num <= 5 and classification in ["Best", "Excellent", "Good"]:
+            classification = "Book"
             
         # Time calculation
         current_clock = next_node.clock()
