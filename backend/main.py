@@ -119,7 +119,9 @@ def parse_pgn(pgn_str: str):
             "notation": san_move,
             "classification": classification,
             "fen": board.fen(),
-            "time": time_str
+            "time": time_str,
+            "eval": score_after / 100 if engine else 0,
+            "clock": current_clock if current_clock is not None else 600
         })
         
         if classification:
@@ -139,6 +141,7 @@ def parse_pgn(pgn_str: str):
         "black": game.headers.get("Black", "Unknown"),
         "black_rating": game.headers.get("BlackElo", "?"),
         "result": game.headers.get("Result", "*"),
+        "base_time": base,
         "moves": moves,
         "counts": classification_counts
     }
