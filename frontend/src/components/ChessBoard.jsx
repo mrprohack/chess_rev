@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 
 const PIECE_SVG = {
   wK: '/pieces/wK.svg', wQ: '/pieces/wQ.svg', wR: '/pieces/wR.svg',
@@ -38,8 +38,67 @@ function parseFenRows(rows, board) {
   return board;
 }
 
+let pieceIdCounter = 0;
+function getNextId() { return `p_${pieceIdCounter++}`; }
+
+function syncPieces(oldPieces, fen) {
+  const newBoard = parseFen(fen);
+  const newPieces = [];
+  const oldUnmatched = oldPieces.filter(p => p.status !== 'captured').map(p => ({ ...p, matched: false }));
+  
+  for (let rank = 0; rank < 8; rank++) {
+    for (let file = 0; file < 8; file++) {
+      const type = newBoard[rank][file];
+      if (type) {
+        let matchIdx = oldUnmatched.findIndex(p => p.type === type && p.rank === rank && p.file === file && !p.matched);
+        if (matchIdx !== -1) {
+          oldUnmatched[matchIdx].matched = true;
+          newPieces.push({ ...oldUnmatched[matchIdx], status: 'idle' });
+        }
+      }
+    }
+  }
+  
+  for (let rank = 0; rank < 8; rank++) {
+    for (let file = 0; file < 8; file++) {
+      const type = newBoard[rank][file];
+      if (type) {
+        const alreadyMatched = newPieces.some(p => p.rank === rank && p.file === file);
+        if (!alreadyMatched) {
+          let matchIdx = oldUnmatched.findIndex(p => p.type === type && !p.matched);
+          
+          if (matchIdx === -1) {
+            const pawnType = type.startsWith('w') ? 'wP' : 'bP';
+            matchIdx = oldUnmatched.findIndex(p => p.type === pawnType && !p.matched);
+            if (matchIdx !== -1) {
+               oldUnmatched[matchIdx].matched = true;
+               newPieces.push({ ...oldUnmatched[matchIdx], type, rank, file, status: 'promoted' });
+               continue;
+            }
+          }
+          
+          if (matchIdx !== -1) {
+            oldUnmatched[matchIdx].matched = true;
+            newPieces.push({ ...oldUnmatched[matchIdx], rank, file, status: 'moved' });
+          } else {
+            newPieces.push({ id: getNextId(), type, rank, file, status: 'idle' });
+          }
+        }
+      }
+    }
+  }
+  
+  const capturedPieces = oldUnmatched.filter(p => !p.matched).map(p => ({ ...p, status: 'captured' }));
+  return [...newPieces, ...capturedPieces];
+}
+
 export default function ChessBoard({ fen = 'start', bestMove, playedMove, classification }) {
-  const board = parseFen(fen);
+  const [pieces, setPieces] = useState(() => syncPieces([], fen));
+
+  useEffect(() => {
+    setPieces(prev => syncPieces(prev, fen));
+  }, [fen]);
+
   const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
   const ranks = [8, 7, 6, 5, 4, 3, 2, 1];
 
@@ -98,7 +157,6 @@ export default function ChessBoard({ fen = 'start', bestMove, playedMove, classi
           {/* 8 squares per rank */}
           {files.map((file, fileIdx) => {
             const isLight = (rankIdx + fileIdx) % 2 === 0;
-            const piece = board[rankIdx][fileIdx];
 
             return (
               <div key={file} style={{
@@ -109,19 +167,6 @@ export default function ChessBoard({ fen = 'start', bestMove, playedMove, classi
                 position: 'relative',
                 cursor: 'default',
               }}>
-                {piece && (
-                  <img
-                    src={PIECE_SVG[piece]}
-                    alt={piece}
-                    style={{
-                      width: '88%',
-                      height: '88%',
-                      objectFit: 'contain',
-                      filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.5))',
-                      pointerEvents: 'none',
-                    }}
-                  />
-                )}
                 {/* File label on bottom rank */}
                 {rankIdx === 7 && (
                   <span style={{
@@ -157,6 +202,38 @@ export default function ChessBoard({ fen = 'start', bestMove, playedMove, classi
           {file}
         </div>
       ))}
+      </div>
+
+      {/* Pieces Overlay */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: '18px',
+        right: 0,
+        bottom: '18px',
+        pointerEvents: 'none',
+        zIndex: 5
+      }}>
+        {pieces.map(p => {
+          const left = `${p.file * 12.5}%`;
+          const top = `${p.rank * 12.5}%`;
+          let className = 'chess-piece';
+          if (p.status === 'captured') className += ' piece-captured';
+          if (p.status === 'promoted') className += ' piece-promoted';
+          
+          return (
+            <img
+              key={p.id}
+              src={PIECE_SVG[p.type]}
+              alt={p.type}
+              className={className}
+              style={{
+                left,
+                top,
+              }}
+            />
+          );
+        })}
       </div>
       
       {/* SVG Arrow Overlay */}

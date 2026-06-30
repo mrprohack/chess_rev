@@ -54,15 +54,24 @@ export default function RightPanel({ gameData, setGameData, currentMoveIndex, se
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchGame = async () => {
-    if (!url) return;
+  React.useEffect(() => {
+    const path = window.location.pathname;
+    if (path.includes('/game/') || path.includes('/live/')) {
+      const chessComUrl = `https://www.chess.com${path}`;
+      setUrl(chessComUrl);
+      fetchGame(chessComUrl);
+    }
+  }, []);
+
+  const fetchGame = async (targetUrl = url) => {
+    if (!targetUrl) return;
     setLoading(true);
     setError(null);
     try {
       const response = await fetch('http://127.0.0.1:8000/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url })
+        body: JSON.stringify({ url: targetUrl })
       });
       if (!response.ok) {
         const err = await response.json();
