@@ -10,6 +10,7 @@ function App() {
   const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [theme, setTheme] = useState('dark');
+  const [engineDepth, setEngineDepth] = useState(10);
 
   useEffect(() => {
     const applyTheme = (t) => {
@@ -44,6 +45,7 @@ function App() {
           setGameData={setGameData}
           currentMoveIndex={currentMoveIndex}
           setCurrentMoveIndex={setCurrentMoveIndex}
+          engineDepth={engineDepth}
         />
       </div>
       <SettingsModal 
@@ -51,6 +53,8 @@ function App() {
         onClose={() => setIsSettingsOpen(false)}
         theme={theme}
         setTheme={setTheme}
+        engineDepth={engineDepth}
+        setEngineDepth={setEngineDepth}
       />
     </div>
   );

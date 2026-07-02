@@ -49,7 +49,7 @@ const getIcon = (cls) => {
   }
 };
 
-export default function RightPanel({ gameData, setGameData, currentMoveIndex, setCurrentMoveIndex }) {
+export default function RightPanel({ gameData, setGameData, currentMoveIndex, setCurrentMoveIndex, engineDepth }) {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -72,7 +72,7 @@ export default function RightPanel({ gameData, setGameData, currentMoveIndex, se
       const response = await fetch('http://127.0.0.1:8000/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: finalUrl })
+        body: JSON.stringify({ url: finalUrl, depth: engineDepth || 10 })
       });
       if (!response.ok) {
         const err = await response.json();
@@ -157,7 +157,7 @@ export default function RightPanel({ gameData, setGameData, currentMoveIndex, se
           <input
             className="url-input"
             type="text"
-            placeholder="Paste Chess.com game URL…"
+            placeholder="Paste Chess.com or Lichess game URL…"
             value={url}
             onChange={e => setUrl(e.target.value)}
             onKeyDown={handleKey}
@@ -180,9 +180,17 @@ export default function RightPanel({ gameData, setGameData, currentMoveIndex, se
       <div className="engine-info">
         <span>Starting Position</span>
         <span className="engine-name">
-          <Cpu size={11} /> Stockfish 18 Lite <Settings size={11} style={{ cursor: 'pointer' }} />
+          <Cpu size={11} /> Stockfish 18 Lite (Depth {engineDepth || 10}) <Settings size={11} style={{ cursor: 'pointer' }} />
         </span>
       </div>
+
+      {/* Accuracy Info */}
+      {gameData && gameData.accuracy && (
+        <div className="accuracy-info" style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 15px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)', fontWeight: 'bold' }}>
+          <span style={{ color: '#d4a843' }}>White Accuracy: {gameData.accuracy.white}%</span>
+          <span style={{ color: '#5b7fa6' }}>Black Accuracy: {gameData.accuracy.black}%</span>
+        </div>
+      )}
 
       {/* Moves List */}
       <div className="moves-list">

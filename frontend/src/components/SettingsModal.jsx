@@ -6,7 +6,9 @@ export default function SettingsModal({
   isOpen,
   onClose,
   theme,
-  setTheme
+  setTheme,
+  engineDepth,
+  setEngineDepth
 }) {
   if (!isOpen) return null;
 
@@ -42,6 +44,22 @@ export default function SettingsModal({
               >
                 System
               </button>
+            </div>
+          </div>
+          <div className="setting-row" style={{ marginTop: '20px' }}>
+            <label>Engine Depth ({engineDepth})</label>
+            <div className="slider-group">
+              <input 
+                type="range" 
+                min="5" 
+                max="20" 
+                value={engineDepth} 
+                onChange={(e) => setEngineDepth(parseInt(e.target.value))}
+                style={{ width: '100%' }}
+              />
+              <div style={{ fontSize: '0.8rem', color: '#888', marginTop: '5px' }}>
+                Higher depth = more accurate, but slower analysis.
+              </div>
             </div>
           </div>
         </div>
