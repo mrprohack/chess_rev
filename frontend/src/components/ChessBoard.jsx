@@ -1,11 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 
-const PIECE_SVG = {
-  wK: '/pieces/wK.svg', wQ: '/pieces/wQ.svg', wR: '/pieces/wR.svg',
-  wB: '/pieces/wB.svg', wN: '/pieces/wN.svg', wP: '/pieces/wP.svg',
-  bK: '/pieces/bK.svg', bQ: '/pieces/bQ.svg', bR: '/pieces/bR.svg',
-  bB: '/pieces/bB.svg', bN: '/pieces/bN.svg', bP: '/pieces/bP.svg',
-};
+// PIECE_SVG is now generated dynamically in the component based on pieceSet prop.
 
 const FEN_CHAR_MAP = {
   K: 'wK', Q: 'wQ', R: 'wR', B: 'wB', N: 'wN', P: 'wP',
@@ -102,9 +97,11 @@ export default function ChessBoard({ fen = 'start', bestMove, playedMove, classi
   const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
   const ranks = [8, 7, 6, 5, 4, 3, 2, 1];
 
-  // Premium board colors
-  const LIGHT = '#F0D9B5';
-  const DARK = '#B58863';
+  // Premium board colors (from CSS variables)
+  const LIGHT = 'var(--board-light, #F0D9B5)';
+  const DARK = 'var(--board-dark, #B58863)';
+
+  const pieceDir = '/pieces_alt';
 
   function uciToCoords(uci) {
     if (!uci || uci.length < 4) return null;
@@ -224,7 +221,7 @@ export default function ChessBoard({ fen = 'start', bestMove, playedMove, classi
           return (
             <img
               key={p.id}
-              src={PIECE_SVG[p.type]}
+              src={`${pieceDir}/${p.type}.svg`}
               alt={p.type}
               className={className}
               style={{

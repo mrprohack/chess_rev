@@ -6,7 +6,7 @@ import {
   Settings
 } from 'lucide-react';
 
-export default function Sidebar() {
+export default function Sidebar({ onOpenSettings }) {
   return (
     <div className="sidebar">
       
@@ -14,11 +14,13 @@ export default function Sidebar() {
       <div style={{ flex: 1 }}></div>
 
       {/* Footer Icons */}
-      <div style={{ display: 'flex', justifyContent: 'space-around', padding: '10px 0' }}>
-        <Users size={16} color="var(--text-secondary)" />
-        <Mail size={16} color="var(--text-secondary)" />
-        <Bell size={16} color="var(--text-secondary)" />
-        <Settings size={16} color="var(--text-secondary)" />
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '10px 0', gap: '15px' }}>
+        <Users size={20} color="var(--text-60)" />
+        <Mail size={20} color="var(--text-60)" />
+        <Bell size={20} color="var(--text-60)" />
+        <div onClick={onOpenSettings} title="Settings">
+          <Settings size={20} color="var(--text-60)" />
+        </div>
       </div>
     </div>
   );

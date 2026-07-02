@@ -63,15 +63,16 @@ export default function RightPanel({ gameData, setGameData, currentMoveIndex, se
     }
   }, []);
 
-  const fetchGame = async (targetUrl = url) => {
-    if (!targetUrl) return;
+  const fetchGame = async (targetUrl) => {
+    const finalUrl = typeof targetUrl === 'string' ? targetUrl : url;
+    if (!finalUrl) return;
     setLoading(true);
     setError(null);
     try {
       const response = await fetch('http://127.0.0.1:8000/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: targetUrl })
+        body: JSON.stringify({ url: finalUrl })
       });
       if (!response.ok) {
         const err = await response.json();
