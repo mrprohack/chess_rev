@@ -2,8 +2,6 @@
 
 A full-stack Chess.com game review clone that lets you paste any Chess.com game URL and instantly replay it move-by-move in a beautiful dark-mode UI.
 
-![Chess Clone UI](chess-review-scraper/screenshot_analysis.png)
-
 ---
 
 ## 🚀 Features
