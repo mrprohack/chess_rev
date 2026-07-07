@@ -12,3 +12,8 @@ build/
 stockfish/
 .idea/
 .vscode/
+
+# Agent and local files
+graphify-out/
+.agents/
+games.db

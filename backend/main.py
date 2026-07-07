@@ -24,6 +24,10 @@ class AnalyzeRequest(BaseModel):
     url: str
     depth: Optional[int] = 10
 
+@app.get("/")
+async def root():
+    return {"message": "Chess API is running. Please open the Frontend Web UI at http://127.0.0.1:5173"}
+
 def parse_pgn(pgn_str: str, engine_depth: int = 10):
     # Parse the PGN using python-chess
     pgn_io = io.StringIO(pgn_str)

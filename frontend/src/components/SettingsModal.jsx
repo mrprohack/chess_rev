@@ -10,6 +10,14 @@ export default function SettingsModal({
   engineDepth,
   setEngineDepth
 }) {
+  React.useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
@@ -17,14 +25,14 @@ export default function SettingsModal({
       <div className="modal-content" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Settings</h2>
-          <button className="close-btn" onClick={onClose}>
-            <X size={20} />
+          <button className="close-btn" onClick={onClose} aria-label="Close Settings">
+            <X size={20} aria-hidden="true" />
           </button>
         </div>
         
         <div className="modal-body">
-          <div className="setting-row">
-            <label>Theme</label>
+          <div className="setting-row" role="group" aria-labelledby="theme-label">
+            <label id="theme-label">Theme</label>
             <div className="toggle-group">
               <button 
                 className={`toggle-btn ${theme === 'dark' ? 'active' : ''}`}
@@ -47,9 +55,11 @@ export default function SettingsModal({
             </div>
           </div>
           <div className="setting-row" style={{ marginTop: '20px' }}>
-            <label>Engine Depth ({engineDepth})</label>
+            <label htmlFor="engine-depth-input">Engine Depth ({engineDepth})</label>
             <div className="slider-group">
               <input 
+                id="engine-depth-input"
+                name="engine-depth"
                 type="range" 
                 min="5" 
                 max="20" 

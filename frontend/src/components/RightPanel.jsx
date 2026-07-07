@@ -8,6 +8,7 @@ import {
   Share2,
   RefreshCw,
   Cpu,
+  Loader2
 } from 'lucide-react';
 
 const CLASS_COLORS = {
@@ -157,12 +158,16 @@ export default function RightPanel({ gameData, setGameData, currentMoveIndex, se
           <input
             className="url-input"
             type="text"
-            placeholder="Paste Chess.com or Lichess game URL…"
+            name="url"
+            autoComplete="off"
+            aria-label="Game URL"
+            placeholder="e.g., https://www.chess.com/game/live/1234..."
             value={url}
             onChange={e => setUrl(e.target.value)}
             onKeyDown={handleKey}
           />
-          <button className="analyze-btn" onClick={fetchGame} disabled={loading}>
+          <button type="button" className="analyze-btn" onClick={fetchGame} disabled={loading} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+            {loading && <Loader2 size={14} className="spin" aria-hidden="true" style={{ animation: 'spin 2s linear infinite' }} />}
             {loading ? 'Loading…' : 'Analyze'}
           </button>
         </div>
@@ -180,15 +185,15 @@ export default function RightPanel({ gameData, setGameData, currentMoveIndex, se
       <div className="engine-info">
         <span>Starting Position</span>
         <span className="engine-name">
-          <Cpu size={11} /> Stockfish 18 Lite (Depth {engineDepth || 10}) <Settings size={11} style={{ cursor: 'pointer' }} />
+          <Cpu size={11} aria-hidden="true" /> Stockfish 18 Lite (Depth {engineDepth || 10}) <Settings size={11} aria-hidden="true" style={{ cursor: 'pointer' }} />
         </span>
       </div>
 
       {/* Accuracy Info */}
       {gameData && gameData.accuracy && (
         <div className="accuracy-info" style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 15px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)', fontWeight: 'bold' }}>
-          <span style={{ color: '#d4a843' }}>White Accuracy: {gameData.accuracy.white}%</span>
-          <span style={{ color: '#5b7fa6' }}>Black Accuracy: {gameData.accuracy.black}%</span>
+          <span style={{ color: '#d4a843', fontVariantNumeric: 'tabular-nums' }}>White Accuracy: {gameData.accuracy.white}%</span>
+          <span style={{ color: '#5b7fa6', fontVariantNumeric: 'tabular-nums' }}>Black Accuracy: {gameData.accuracy.black}%</span>
         </div>
       )}
 
@@ -198,9 +203,11 @@ export default function RightPanel({ gameData, setGameData, currentMoveIndex, se
           <div key={idx} className="move-row">
             <div className="move-num">{m.num}.</div>
 
-            <div
+            <button
+              type="button"
               className={`move-col ${currentMoveIndex === m.wIndex ? 'selected' : ''}`}
               onClick={() => m.wIndex && setCurrentMoveIndex(m.wIndex)}
+              style={{ background: 'none', border: 'none', textAlign: 'left', font: 'inherit', color: 'inherit', padding: 0, cursor: 'pointer' }}
             >
                 <div className="move-text">
                 {m.wClass && (
@@ -214,11 +221,13 @@ export default function RightPanel({ gameData, setGameData, currentMoveIndex, se
                 <div className="time-bar"></div>
                 <span>{m.wTime || ''}</span>
               </div>
-            </div>
+            </button>
 
-            <div
+            <button
+              type="button"
               className={`move-col ${currentMoveIndex === m.bIndex ? 'selected' : ''}`}
               onClick={() => m.bIndex && setCurrentMoveIndex(m.bIndex)}
+              style={{ background: 'none', border: 'none', textAlign: 'left', font: 'inherit', color: 'inherit', padding: 0, cursor: 'pointer' }}
             >
                 <div className="move-text">
                 {m.bClass && (
@@ -232,7 +241,7 @@ export default function RightPanel({ gameData, setGameData, currentMoveIndex, se
                 <div className="time-bar"></div>
                 <span>{m.bTime || ''}</span>
               </div>
-            </div>
+            </button>
           </div>
         ))}
 
@@ -242,7 +251,7 @@ export default function RightPanel({ gameData, setGameData, currentMoveIndex, se
             const b = blackCounts[row.key];
             if (w === 0 && b === 0 && row.key !== 'best' && row.key !== 'blunder') return null; // hide empty rows mostly
             return (
-              <div key={row.key} className="stat-row">
+              <div key={row.key} className="stat-row" style={{ fontVariantNumeric: 'tabular-nums' }}>
                 <div className="stat-label">{row.label}</div>
                 <div className={`stat-white ${row.key}`}>{w}</div>
                 <div className={`stat-icon ${CLASS_COLORS[row.key]}`}>{row.icon}</div>
@@ -260,16 +269,16 @@ export default function RightPanel({ gameData, setGameData, currentMoveIndex, se
         </button>
 
         <div className="controls">
-          <button className="control-btn" title="Share"><Share2 size={15} /></button>
+          <button className="control-btn" title="Share" aria-label="Share"><Share2 size={15} aria-hidden="true" /></button>
 
           <div className="controls-main">
-            <button className="control-btn" onClick={goToStart} title="Start"><SkipBack size={16} /></button>
-            <button className="control-btn" onClick={goPrev} title="Previous"><ChevronLeft size={16} /></button>
-            <button className="control-btn" onClick={goNext} title="Next"><ChevronRight size={16} /></button>
-            <button className="control-btn" onClick={goToEnd} title="End"><SkipForward size={16} /></button>
+            <button className="control-btn" onClick={goToStart} title="Start" aria-label="Start"><SkipBack size={16} aria-hidden="true" /></button>
+            <button className="control-btn" onClick={goPrev} title="Previous" aria-label="Previous"><ChevronLeft size={16} aria-hidden="true" /></button>
+            <button className="control-btn" onClick={goNext} title="Next" aria-label="Next"><ChevronRight size={16} aria-hidden="true" /></button>
+            <button className="control-btn" onClick={goToEnd} title="End" aria-label="End"><SkipForward size={16} aria-hidden="true" /></button>
           </div>
 
-          <button className="control-btn" title="Flip board"><RefreshCw size={15} /></button>
+          <button className="control-btn" title="Flip board" aria-label="Flip board"><RefreshCw size={15} aria-hidden="true" /></button>
         </div>
       </div>
     </div>
