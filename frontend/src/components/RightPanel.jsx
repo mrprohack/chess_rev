@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -8,7 +8,9 @@ import {
   Share2,
   RefreshCw,
   Cpu,
-  Loader2
+  Loader2,
+  Play,
+  Pause
 } from 'lucide-react';
 
 const CLASS_COLORS = {
@@ -16,13 +18,33 @@ const CLASS_COLORS = {
   good: 'good', inaccuracy: 'inaccuracy', mistake: 'mistake', miss: 'miss', blunder: 'blunder', book: 'book'
 };
 
-const renderSan = (san, cls) => {
+function playMoveAudio(soundEnabled) {
+  if (!soundEnabled) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(520, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(160, ctx.currentTime + 0.07);
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.07);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.07);
+  } catch (e) {
+    void e;
+  }
+}
+
+const renderSan = (san, cls, figurineNotation = true) => {
   if (!san) return null;
   const pieces = { 'N': '♘', 'B': '♗', 'R': '♖', 'Q': '♕', 'K': '♔' };
   const firstChar = san.charAt(0);
   const colorClass = cls ? CLASS_COLORS[cls.toLowerCase()] + "-text" : "";
   
-  if (pieces[firstChar]) {
+  if (figurineNotation && pieces[firstChar]) {
     return (
       <span className={colorClass} style={{ display: 'inline-flex', alignItems: 'center' }}>
         <span style={{ fontSize: '1.05rem', marginRight: '1px' }}>{pieces[firstChar]}</span>
@@ -50,10 +72,53 @@ const getIcon = (cls) => {
   }
 };
 
-export default function RightPanel({ gameData, setGameData, currentMoveIndex, setCurrentMoveIndex, engineDepth }) {
+export default function RightPanel({
+  gameData,
+  setGameData,
+  currentMoveIndex,
+  setCurrentMoveIndex,
+  engineDepth,
+  onOpenSettings,
+  isFlipped,
+  onToggleFlip,
+  soundEnabled = true,
+  autoPlaySpeed = 1000,
+  figurineNotation = true
+}) {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('moves');
+  const [isPlaying, setIsPlaying] = useState(false);
+  const prevMoveIndexRef = useRef(currentMoveIndex);
+
+  // Play audio on move index changes
+  useEffect(() => {
+    if (prevMoveIndexRef.current !== currentMoveIndex) {
+      playMoveAudio(soundEnabled);
+      prevMoveIndexRef.current = currentMoveIndex;
+    }
+  }, [currentMoveIndex, soundEnabled]);
+
+  // Auto-play interval effect
+  useEffect(() => {
+    let interval = null;
+    if (isPlaying) {
+      interval = setInterval(() => {
+        setCurrentMoveIndex(prev => {
+          const max = gameData?.moves?.length || 0;
+          if (prev >= max) {
+            setIsPlaying(false);
+            return prev;
+          }
+          return prev + 1;
+        });
+      }, autoPlaySpeed);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isPlaying, autoPlaySpeed, gameData, setCurrentMoveIndex]);
 
   React.useEffect(() => {
     const path = window.location.pathname;
@@ -62,6 +127,7 @@ export default function RightPanel({ gameData, setGameData, currentMoveIndex, se
       setUrl(chessComUrl);
       fetchGame(chessComUrl);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchGame = async (targetUrl) => {
@@ -70,7 +136,7 @@ export default function RightPanel({ gameData, setGameData, currentMoveIndex, se
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/analyze', {
+      const response = await fetch('http://127.0.0.1:8001/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: finalUrl, depth: engineDepth || 10 })
@@ -94,10 +160,11 @@ export default function RightPanel({ gameData, setGameData, currentMoveIndex, se
   };
 
   const maxMoves = gameData?.moves?.length || 0;
-  const goToStart = () => setCurrentMoveIndex(0);
-  const goToEnd = () => setCurrentMoveIndex(maxMoves);
-  const goPrev = () => setCurrentMoveIndex(Math.max(0, currentMoveIndex - 1));
-  const goNext = () => setCurrentMoveIndex(Math.min(maxMoves, currentMoveIndex + 1));
+  const goToStart = () => { setIsPlaying(false); setCurrentMoveIndex(0); };
+  const goToEnd = () => { setIsPlaying(false); setCurrentMoveIndex(maxMoves); };
+  const goPrev = () => { setIsPlaying(false); setCurrentMoveIndex(Math.max(0, currentMoveIndex - 1)); };
+  const goNext = () => { setIsPlaying(false); setCurrentMoveIndex(Math.min(maxMoves, currentMoveIndex + 1)); };
+  const togglePlay = () => setIsPlaying(prev => !prev);
 
   const movePairs = [];
   if (gameData && gameData.moves) {
@@ -157,130 +224,183 @@ export default function RightPanel({ gameData, setGameData, currentMoveIndex, se
         <div className="url-input-row">
           <input
             className="url-input"
-            type="text"
+            type="url"
             name="url"
             autoComplete="off"
+            spellCheck={false}
             aria-label="Game URL"
-            placeholder="e.g., https://www.chess.com/game/live/1234..."
+            placeholder="e.g., https://www.chess.com/game/live/1234…"
             value={url}
             onChange={e => setUrl(e.target.value)}
             onKeyDown={handleKey}
           />
-          <button type="button" className="analyze-btn" onClick={fetchGame} disabled={loading} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+          <button type="button" className="analyze-btn" onClick={fetchGame} disabled={loading}>
             {loading && <Loader2 size={14} className="spin" aria-hidden="true" style={{ animation: 'spin 2s linear infinite' }} />}
             {loading ? 'Loading…' : 'Analyze'}
           </button>
         </div>
-        {error && <div className="error-msg">{error}</div>}
+        {error && <div className="error-msg" role="alert">{error}</div>}
       </div>
 
       {/* Secondary Tabs */}
-      <div className="panel-tabs-secondary">
-        <div className="panel-tab-sec active">Moves</div>
-        <div className="panel-tab-sec">Analysis</div>
-        <div className="panel-tab-sec">Openings</div>
+      <div className="panel-tabs-secondary" role="tablist" aria-label="Game Analysis Sections">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'moves'}
+          className={`panel-tab-sec ${activeTab === 'moves' ? 'active' : ''}`}
+          onClick={() => setActiveTab('moves')}
+        >
+          Moves
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'analysis'}
+          className={`panel-tab-sec ${activeTab === 'analysis' ? 'active' : ''}`}
+          onClick={() => setActiveTab('analysis')}
+        >
+          Analysis
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'openings'}
+          className={`panel-tab-sec ${activeTab === 'openings' ? 'active' : ''}`}
+          onClick={() => setActiveTab('openings')}
+        >
+          Openings
+        </button>
       </div>
 
       {/* Engine Info */}
       <div className="engine-info">
         <span>Starting Position</span>
         <span className="engine-name">
-          <Cpu size={11} aria-hidden="true" /> Stockfish 18 Lite (Depth {engineDepth || 10}) <Settings size={11} aria-hidden="true" style={{ cursor: 'pointer' }} />
+          <Cpu size={11} aria-hidden="true" /> Stockfish 18 Lite (Depth {engineDepth || 10})
+          {onOpenSettings && (
+            <button
+              type="button"
+              onClick={onOpenSettings}
+              aria-label="Engine settings"
+              style={{ background: 'none', border: 'none', padding: '2px', cursor: 'pointer', color: 'inherit', display: 'inline-flex' }}
+            >
+              <Settings size={11} aria-hidden="true" />
+            </button>
+          )}
         </span>
       </div>
 
       {/* Accuracy Info */}
       {gameData && gameData.accuracy && (
-        <div className="accuracy-info" style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 15px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)', fontWeight: 'bold' }}>
+        <div className="accuracy-info">
           <span style={{ color: '#d4a843', fontVariantNumeric: 'tabular-nums' }}>White Accuracy: {gameData.accuracy.white}%</span>
           <span style={{ color: '#5b7fa6', fontVariantNumeric: 'tabular-nums' }}>Black Accuracy: {gameData.accuracy.black}%</span>
         </div>
       )}
 
-      {/* Moves List */}
-      <div className="moves-list">
-        {displayMoves.map((m, idx) => (
-          <div key={idx} className="move-row">
-            <div className="move-num">{m.num}.</div>
+      {/* Tab content view */}
+      {activeTab === 'moves' && (
+        <div className="moves-list">
+          {displayMoves.map((m, idx) => (
+            <div key={idx} className="move-row">
+              <div className="move-num">{m.num}.</div>
 
-            <button
-              type="button"
-              className={`move-col ${currentMoveIndex === m.wIndex ? 'selected' : ''}`}
-              onClick={() => m.wIndex && setCurrentMoveIndex(m.wIndex)}
-              style={{ background: 'none', border: 'none', textAlign: 'left', font: 'inherit', color: 'inherit', padding: 0, cursor: 'pointer' }}
-            >
+              <button
+                type="button"
+                className={`move-col ${currentMoveIndex === m.wIndex ? 'selected' : ''}`}
+                onClick={() => { setIsPlaying(false); if (m.wIndex) setCurrentMoveIndex(m.wIndex); }}
+                aria-label={`Move ${m.num} White: ${m.w || 'none'}`}
+              >
                 <div className="move-text">
-                {m.wClass && (
-                  <span className={`move-class-icon ${CLASS_COLORS[m.wClass?.toLowerCase()] || ''}`} title={m.wClass}>
-                    {getIcon(m.wClass)}
-                  </span>
-                )}
-                {renderSan(m.w, m.wClass)}
-              </div>
-              <div className="move-time">
-                <div className="time-bar"></div>
-                <span>{m.wTime || ''}</span>
-              </div>
-            </button>
+                  {m.wClass && (
+                    <span className={`move-class-icon ${CLASS_COLORS[m.wClass?.toLowerCase()] || ''}`} title={m.wClass}>
+                      {getIcon(m.wClass)}
+                    </span>
+                  )}
+                  {renderSan(m.w, m.wClass, figurineNotation)}
+                </div>
+                <div className="move-time">
+                  <div className="time-bar"></div>
+                  <span>{m.wTime || ''}</span>
+                </div>
+              </button>
 
-            <button
-              type="button"
-              className={`move-col ${currentMoveIndex === m.bIndex ? 'selected' : ''}`}
-              onClick={() => m.bIndex && setCurrentMoveIndex(m.bIndex)}
-              style={{ background: 'none', border: 'none', textAlign: 'left', font: 'inherit', color: 'inherit', padding: 0, cursor: 'pointer' }}
-            >
+              <button
+                type="button"
+                className={`move-col ${currentMoveIndex === m.bIndex ? 'selected' : ''}`}
+                onClick={() => { setIsPlaying(false); if (m.bIndex) setCurrentMoveIndex(m.bIndex); }}
+                aria-label={`Move ${m.num} Black: ${m.b || 'none'}`}
+              >
                 <div className="move-text">
-                {m.bClass && (
-                  <span className={`move-class-icon ${CLASS_COLORS[m.bClass?.toLowerCase()] || ''}`} title={m.bClass}>
-                    {getIcon(m.bClass)}
-                  </span>
-                )}
-                {renderSan(m.b, m.bClass)}
-              </div>
-              <div className="move-time">
-                <div className="time-bar"></div>
-                <span>{m.bTime || ''}</span>
-              </div>
-            </button>
+                  {m.bClass && (
+                    <span className={`move-class-icon ${CLASS_COLORS[m.bClass?.toLowerCase()] || ''}`} title={m.bClass}>
+                      {getIcon(m.bClass)}
+                    </span>
+                  )}
+                  {renderSan(m.b, m.bClass, figurineNotation)}
+                </div>
+                <div className="move-time">
+                  <div className="time-bar"></div>
+                  <span>{m.bTime || ''}</span>
+                </div>
+              </button>
+            </div>
+          ))}
+
+          <div className="stats-container">
+            {statRows.map((row) => {
+              const w = whiteCounts[row.key];
+              const b = blackCounts[row.key];
+              if (w === 0 && b === 0 && row.key !== 'best' && row.key !== 'blunder') return null;
+              return (
+                <div key={row.key} className="stat-row" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  <div className="stat-label">{row.label}</div>
+                  <div className={`stat-white ${row.key}`}>{w}</div>
+                  <div className={`stat-icon ${CLASS_COLORS[row.key]}`}>{row.icon}</div>
+                  <div className={`stat-black ${row.key}`}>{b}</div>
+                </div>
+              );
+            })}
           </div>
-        ))}
-
-        <div className="stats-container">
-          {statRows.map((row) => {
-            const w = whiteCounts[row.key];
-            const b = blackCounts[row.key];
-            if (w === 0 && b === 0 && row.key !== 'best' && row.key !== 'blunder') return null; // hide empty rows mostly
-            return (
-              <div key={row.key} className="stat-row" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                <div className="stat-label">{row.label}</div>
-                <div className={`stat-white ${row.key}`}>{w}</div>
-                <div className={`stat-icon ${CLASS_COLORS[row.key]}`}>{row.icon}</div>
-                <div className={`stat-black ${row.key}`}>{b}</div>
-              </div>
-            );
-          })}
         </div>
-      </div>
+      )}
+
+      {activeTab === 'analysis' && (
+        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-60)', fontSize: '0.85rem' }}>
+          Interactive Stockfish evaluation graph & blunder timeline.
+        </div>
+      )}
+
+      {activeTab === 'openings' && (
+        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-60)', fontSize: '0.85rem' }}>
+          Opening Explorer & Win-Rate Statistics.
+        </div>
+      )}
 
       {/* Footer Controls */}
       <div className="panel-footer">
-        <button className="review-btn">
+        <button type="button" className="review-btn" onClick={() => fetchGame()}>
           ★ Game Review
         </button>
 
         <div className="controls">
-          <button className="control-btn" title="Share" aria-label="Share"><Share2 size={15} aria-hidden="true" /></button>
+          <button type="button" className="control-btn" title="Share" aria-label="Share game"><Share2 size={15} aria-hidden="true" /></button>
 
           <div className="controls-main">
-            <button className="control-btn" onClick={goToStart} title="Start" aria-label="Start"><SkipBack size={16} aria-hidden="true" /></button>
-            <button className="control-btn" onClick={goPrev} title="Previous" aria-label="Previous"><ChevronLeft size={16} aria-hidden="true" /></button>
-            <button className="control-btn" onClick={goNext} title="Next" aria-label="Next"><ChevronRight size={16} aria-hidden="true" /></button>
-            <button className="control-btn" onClick={goToEnd} title="End" aria-label="End"><SkipForward size={16} aria-hidden="true" /></button>
+            <button type="button" className="control-btn" onClick={goToStart} title="Start (Home)" aria-label="First move"><SkipBack size={16} aria-hidden="true" /></button>
+            <button type="button" className="control-btn" onClick={goPrev} title="Previous (←)" aria-label="Previous move"><ChevronLeft size={16} aria-hidden="true" /></button>
+            <button type="button" className={`control-btn ${isPlaying ? 'active' : ''}`} onClick={togglePlay} title={isPlaying ? "Pause auto-play" : "Start auto-play"} aria-label="Auto play moves">
+              {isPlaying ? <Pause size={16} aria-hidden="true" /> : <Play size={16} aria-hidden="true" />}
+            </button>
+            <button type="button" className="control-btn" onClick={goNext} title="Next (→)" aria-label="Next move"><ChevronRight size={16} aria-hidden="true" /></button>
+            <button type="button" className="control-btn" onClick={goToEnd} title="End (End)" aria-label="Last move"><SkipForward size={16} aria-hidden="true" /></button>
           </div>
 
-          <button className="control-btn" title="Flip board" aria-label="Flip board"><RefreshCw size={15} aria-hidden="true" /></button>
+          <button type="button" className={`control-btn ${isFlipped ? 'active' : ''}`} onClick={onToggleFlip} title={isFlipped ? "Flip board (Black perspective)" : "Flip board (White perspective)"} aria-label="Flip board perspective" aria-pressed={isFlipped}><RefreshCw size={15} aria-hidden="true" /></button>
         </div>
       </div>
     </div>
   );
 }
+

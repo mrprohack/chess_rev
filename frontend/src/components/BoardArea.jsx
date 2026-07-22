@@ -1,7 +1,14 @@
 import React from 'react';
 import ChessBoard from './ChessBoard';
 
-export default function BoardArea({ gameData, currentMoveIndex = 0 }) {
+export default function BoardArea({ 
+  gameData, 
+  currentMoveIndex = 0, 
+  isFlipped = false,
+  boardTheme = 'wood',
+  showArrows = true,
+  showCoordinates = true
+}) {
   const oppName = gameData ? gameData.black : 'Opponent';
   const oppRating = gameData ? gameData.black_rating : '—';
   const selfName = gameData ? gameData.white : 'You';
@@ -39,24 +46,40 @@ export default function BoardArea({ gameData, currentMoveIndex = 0 }) {
   // Odd index (1, 3, 5) = Black's turn to move
   const isWhiteTurn = currentMoveIndex % 2 === 0;
 
+  const topPlayer = isFlipped ? (
+    <PlayerBar name={selfName} rating={selfRating} initial={selfName.charAt(0)} color="#d4a843" isActive={isWhiteTurn} clockSeconds={selfClock} />
+  ) : (
+    <PlayerBar name={oppName} rating={oppRating} initial={oppName.charAt(0)} color="#5b7fa6" isActive={!isWhiteTurn} clockSeconds={oppClock} />
+  );
+
+  const bottomPlayer = isFlipped ? (
+    <PlayerBar name={oppName} rating={oppRating} initial={oppName.charAt(0)} color="#5b7fa6" isActive={!isWhiteTurn} clockSeconds={oppClock} />
+  ) : (
+    <PlayerBar name={selfName} rating={selfRating} initial={selfName.charAt(0)} color="#d4a843" isActive={isWhiteTurn} clockSeconds={selfClock} />
+  );
+
   return (
-    <div className="board-container">
-      {/* Top Player (Opponent / Black) */}
-      <PlayerBar name={oppName} rating={oppRating} initial={oppName.charAt(0)} color="#5b7fa6" isActive={!isWhiteTurn} clockSeconds={oppClock} />
+    <div className="board-container" aria-live="polite">
+      {/* Top Player */}
+      {topPlayer}
 
       {/* The Chess Board */}
       <div className="board-wrapper">
-        <EvalBar score={currentScore} />
+        <EvalBar score={currentScore} isFlipped={isFlipped} />
         <ChessBoard 
           fen={currentFen} 
           bestMove={currentBestMove} 
           playedMove={currentPlayedMove}
           classification={currentClassification}
+          isFlipped={isFlipped}
+          boardTheme={boardTheme}
+          showArrows={showArrows}
+          showCoordinates={showCoordinates}
         />
       </div>
 
-      {/* Bottom Player (Self / White) */}
-      <PlayerBar name={selfName} rating={selfRating} initial={selfName.charAt(0)} color="#d4a843" isActive={isWhiteTurn} clockSeconds={selfClock} />
+      {/* Bottom Player */}
+      {bottomPlayer}
     </div>
   );
 }
@@ -93,21 +116,23 @@ function PlayerBar({ name, rating, initial, color, isActive, clockSeconds = 600 
   );
 }
 
-function EvalBar({ score }) {
+function EvalBar({ score, isFlipped = false }) {
   // Clamp score between -10 and 10 for the display
   let clampedScore = Math.max(-10, Math.min(10, score || 0));
   
   // Convert score to percentage: 0 is 50%, 10 is 100%, -10 is 0%
   let whitePercent = 50 + (clampedScore / 10) * 50;
 
+  const topPercent = isFlipped ? whitePercent : 100 - whitePercent;
+  const bottomPercent = isFlipped ? 100 - whitePercent : whitePercent;
+  const topColor = isFlipped ? '#f8f8f8' : '#403d39';
+  const bottomColor = isFlipped ? '#403d39' : '#f8f8f8';
+
   return (
-    <div className="eval-bar-container">
-      {/* Black part (top) */}
-      <div className="eval-bar-black" style={{ flex: 100 - whitePercent }}></div>
-      {/* White part (bottom) */}
-      <div className="eval-bar-white" style={{ flex: whitePercent }}></div>
-      {/* Score text overlay */}
-      <span className={`eval-bar-score ${score > 0 ? 'eval-white' : 'eval-black'}`}>
+    <div className="eval-bar-container" aria-label={`Evaluation: ${score > 0 ? '+' : ''}${score.toFixed(1)}`}>
+      <div style={{ flex: topPercent, background: topColor, transition: 'flex 0.5s cubic-bezier(0.4, 0, 0.2, 1)' }}></div>
+      <div style={{ flex: bottomPercent, background: bottomColor, transition: 'flex 0.5s cubic-bezier(0.4, 0, 0.2, 1)' }}></div>
+      <span className={`eval-bar-score ${score > 0 ? (isFlipped ? 'eval-black' : 'eval-white') : (isFlipped ? 'eval-white' : 'eval-black')}`}>
         {score > 0 ? '+' : ''}{score.toFixed(1)}
       </span>
     </div>

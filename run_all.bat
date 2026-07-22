@@ -6,5 +6,5 @@ echo Starting Chess Frontend...
 start cmd /k "cd frontend && npm.cmd run dev"
 
 echo All services are starting up in separate windows!
-echo Backend URL: http://127.0.0.1:8000
-echo Frontend URL: http://127.0.0.1:5173
+echo Backend URL: http://127.0.0.1:8001
+echo Frontend URL: http://127.0.0.1:8000

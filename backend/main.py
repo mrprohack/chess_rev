@@ -29,7 +29,7 @@ class AnalyzeRequest(BaseModel):
 
 @app.get("/")
 async def root():
-    return {"message": "Chess API is running. Please open the Frontend Web UI at http://127.0.0.1:5173"}
+    return {"message": "Chess API is running. Please open the Frontend Web UI at http://127.0.0.1:8000"}
 
 def parse_pgn(pgn_str: str, engine_depth: int = 10):
     pgn_io = io.StringIO(pgn_str)
@@ -269,5 +269,5 @@ async def analyze_game(req: AnalyzeRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8001)
 

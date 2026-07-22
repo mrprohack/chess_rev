@@ -47,6 +47,24 @@
   --board-dark:  #769656;
 }
 
+/* Focus Ring Utility for Accessibility */
+:focus-visible {
+  outline: 2px solid var(--green) !important;
+  outline-offset: 2px !important;
+}
+
+button:focus:not(:focus-visible),
+input:focus:not(:focus-visible) {
+  outline: none;
+}
+
+button {
+  font-family: inherit;
+  background: transparent;
+  border: none;
+  color: inherit;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -85,19 +103,45 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 12px 0;
+  padding: 14px 0;
   flex-shrink: 0;
   z-index: 10;
 }
 
-.sidebar svg {
-  cursor: pointer;
-  transition: color 0.2s;
-  margin: 12px 0;
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
 }
 
-.sidebar svg:hover {
-  color: var(--text-100) !important;
+.sidebar-nav-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebar-btn {
+  background: none;
+  border: none;
+  padding: 8px;
+  border-radius: 8px;
+  color: var(--text-60);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.sidebar-btn:hover {
+  color: var(--text-100);
+  background: rgba(255,255,255,0.06);
 }
 
 .main-content {
@@ -355,7 +399,10 @@ body {
   text-align: center;
   padding: 11px 0;
   cursor: pointer;
-  color: var(--text-40);
+  color: var(--text-60);
+  background: transparent;
+  border: none;
+  font-family: inherit;
   font-size: 0.82rem;
   font-weight: 600;
   letter-spacing: 0.03em;
@@ -365,12 +412,13 @@ body {
 }
 
 .panel-tab-sec:hover {
-  color: var(--text-60);
-  background: rgba(255,255,255,0.03);
+  color: var(--text-100);
+  background: rgba(255,255,255,0.04);
 }
 
 .panel-tab-sec.active {
   color: var(--text-100);
+  background: transparent;
 }
 
 .panel-tab-sec.active::after {
@@ -386,12 +434,12 @@ body {
 
 /* Engine Info */
 .engine-info {
-  padding: 7px 14px;
+  padding: 8px 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  color: var(--text-40);
-  font-size: 0.72rem;
+  color: var(--text-60);
+  font-size: 0.76rem;
   border-bottom: 1px solid rgba(255,255,255,0.04);
   letter-spacing: 0.02em;
 }
@@ -400,7 +448,7 @@ body {
   display: flex;
   align-items: center;
   gap: 5px;
-  color: var(--text-60);
+  color: var(--text-100);
 }
 
 /* Moves List */
@@ -423,20 +471,21 @@ body {
 .move-row {
   display: flex;
   align-items: center;
-  padding: 0px 0px;
-  border-radius: 4px;
+  padding: 1px 0px;
+  border-radius: 6px;
+  margin-bottom: 1px;
 }
 
 .move-row:hover {
-  background: rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.03);
 }
 
 .move-num {
   width: 36px;
   color: var(--text-40);
   font-size: 0.78rem;
-  font-weight: 500;
-  padding-left: 4px;
+  font-weight: 600;
+  padding-left: 6px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -445,20 +494,25 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 10px;
-  border-radius: 4px;
+  padding: 7px 10px;
+  border-radius: 6px;
   cursor: pointer;
+  background: transparent;
   border: 1px solid transparent;
-  transition: all 0.1s;
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--text-100);
+  text-align: left;
+  transition: all 0.15s ease;
 }
 
 .move-col:hover {
-  background: rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.08);
 }
 
 .move-col.selected {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.22);
 }
 
 .move-text {
@@ -682,3 +736,39 @@ body {
   animation: promote 0.7s ease-in-out forwards;
   z-index: 6; /* Above moving pieces */
 }
+
+.accuracy-info {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 15px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--glass-border);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+/* ── Responsive Layouts ── */
+@media (max-width: 900px) {
+  body {
+    overflow-y: auto;
+  }
+  #root, .layout-container {
+    height: auto;
+    min-height: 100vh;
+  }
+  .main-content {
+    flex-direction: column;
+    overflow: visible;
+    padding: 16px 12px;
+    height: auto;
+  }
+  .board-wrapper {
+    width: min(calc(100vw - 32px), 520px);
+  }
+  .right-panel {
+    width: 100%;
+    max-width: 520px;
+    height: 580px;
+  }
+}
+

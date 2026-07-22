@@ -98,8 +98,8 @@ chesspgn/
 ## Running & Testing the Project
 
 ### Local URLs
-- **Backend API**: `http://127.0.0.1:8000`
-- **Frontend App**: `http://127.0.0.1:5173`
+- **Backend API**: `http://127.0.0.1:8001`
+- **Frontend App**: `http://127.0.0.1:8000`
 
 ### Commands
 
