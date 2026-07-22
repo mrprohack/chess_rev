@@ -116,3 +116,11 @@ chesspgn/
 | Lint Frontend | `cd frontend && npm run lint` |
 | Build Frontend | `cd frontend && npm run build` |
 
+---
+
+## Customization Rules & Git Policy
+
+- **Console URLs**: When running backend and frontend services, always print local URLs to console (`http://127.0.0.1:8000` for backend, `http://127.0.0.1:5173` for frontend).
+- **Git Push Confirmation**: Always ask for explicit user confirmation before executing any `git push` command.
+
+
