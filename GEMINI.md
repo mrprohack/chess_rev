@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-A full-stack chess game review application inspired by Chess.com and Lichess. Users can paste a Chess.com or Lichess game URL to fetch the game PGN, analyze it move-by-move using Stockfish 18, calculate player accuracy & move classifications, and replay the game interactively in a dark/light mode UI.
+A full-stack chess game review application inspired by Chess.com and Lichess. Users can paste a Chess.com or Lichess game URL to fetch the game PGN, analyze it move-by-move using Stockfish 18, calculate player accuracy & move classifications, and replay the game interactively in a dark/light mode UI with full board and playback customization.
 
 ---
 
@@ -18,12 +18,16 @@ chesspgn/
 ├── run_all.ps1                 # PowerShell script to launch backend & frontend
 ├── push.bat                    # Git convenience script
 │
+├── .github/
+│   └── workflows/
+│       └── check.yml           # GitHub Actions CI workflow (Frontend lint & build, Backend test suite)
+│
 ├── backend/                    # FastAPI Backend (Python)
 │   ├── main.py                 # Core REST API (/api/analyze), PGN fetching & Stockfish analysis
 │   ├── database.py             # SQLAlchemy models & SQLite session initialization
-│   ├── test_main.py            # Unit test suite for API endpoints and error paths
+│   ├── test_main.py            # Unit test suite using FastAPI TestClient
 │   ├── games.db                # SQLite database caching analyzed games
-│   ├── requirements.txt        # Python backend dependencies
+│   ├── requirements.txt        # Python backend dependencies (fastapi, uvicorn, requests, chess, httpx)
 │   ├── test_network.py         # Standalone Playwright network interception script
 │   ├── test_scraper.py         # Standalone scraper test script
 │   ├── tuner.py / tuner2.py    # Engine parameter tuning utilities
@@ -39,16 +43,16 @@ chesspgn/
     │   └── pieces/             # Alternate piece set
     └── src/
         ├── main.jsx            # React root renderer
-        ├── App.jsx             # Top-level state (gameData, moveIndex, theme, depth)
+        ├── App.jsx             # Top-level state & localStorage persistence (theme, depth, boardTheme, sound, etc.)
         ├── App.css             # Main styling, theme custom properties & animations
         ├── index.css           # Global reset & CSS base styles
         └── components/
             ├── BoardArea.jsx   # Eval bar, player headers, board wrapper
-            ├── ChessBoard.jsx  # SVG piece renderer, move animation sync, arrows overlay
-            ├── RightPanel.jsx  # URL input, move list, accuracy stats, nav controls
+            ├── ChessBoard.jsx  # SVG piece renderer, move animation sync, board themes & arrows overlay
+            ├── RightPanel.jsx  # URL input, move list, accuracy stats, auto-play & audio synthesizer
             ├── Sidebar.jsx     # Left icon navigation bar
-            ├── SettingsModal.jsx # Settings modal (theme & Stockfish depth slider)
-            └── SettingsModal.css # Settings modal styles
+            ├── SettingsModal.jsx # Comprehensive Settings Modal (theme, depth, board theme, sound, auto-play speed)
+            └── SettingsModal.css # Settings modal styles & UI switches
 ```
 
 ---
@@ -59,7 +63,7 @@ chesspgn/
 - **Framework**: Python 3.13, FastAPI, Uvicorn
 - **Engine**: Stockfish 18 (UCI via `python-chess`)
 - **Database**: SQLite (`games.db`) with SQLAlchemy ORM
-- **HTTP Client**: `requests` for fetching PGNs from Chess.com and Lichess
+- **HTTP Client / Testing**: `requests` for PGN fetching, `httpx` & `fastapi.testclient.TestClient` for in-process testing
 
 ### Core Backend Files
 - **[main.py](file:///c:/Users/hack/Documents/chesspgn/backend/main.py)**:
@@ -69,7 +73,7 @@ chesspgn/
 - **[database.py](file:///c:/Users/hack/Documents/chesspgn/backend/database.py)**:
   - Defines `GameRecord` table storing cached JSON responses keyed on `(url, depth)`.
 - **[test_main.py](file:///c:/Users/hack/Documents/chesspgn/backend/test_main.py)**:
-  - `unittest` suite testing root health (`GET /`), URL domain validation (`POST /api/analyze`), and provider 404 response handling.
+  - `unittest` suite using `FastAPI TestClient` for in-process testing of root health (`GET /`), URL domain validation (`POST /api/analyze`), and provider 404 error handling without requiring a external web server.
 
 ---
 
@@ -83,23 +87,23 @@ chesspgn/
 
 ### Core Frontend Components
 - **[App.jsx](file:///c:/Users/hack/Documents/chesspgn/frontend/src/App.jsx)**:
-  - Holds central application state: `gameData`, `currentMoveIndex`, `theme` ('dark' | 'light' | 'system'), and `engineDepth`.
+  - Central application state with `localStorage` persistence (`theme`, `engineDepth`, `boardTheme`, `showArrows`, `showCoordinates`, `soundEnabled`, `autoPlaySpeed`, `figurineNotation`).
 - **[ChessBoard.jsx](file:///c:/Users/hack/Documents/chesspgn/frontend/src/components/ChessBoard.jsx)**:
-  - Custom SVG-based chess board. Animates piece movements between moves, renders move recommendation arrows (green for best move, red for mistake/blunder).
+  - SVG-based chess board with move animations, 4 color palettes (`wood`, `green`, `blue`, `cyber`), toggleable move recommendation arrows, and rank/file coordinate labels.
 - **[BoardArea.jsx](file:///c:/Users/hack/Documents/chesspgn/frontend/src/components/BoardArea.jsx)**:
-  - Wraps the chessboard and evaluation bar. Renders white and black player cards with ratings and captured pieces.
+  - Board wrapper with dynamic evaluation bar and active player headers.
 - **[RightPanel.jsx](file:///c:/Users/hack/Documents/chesspgn/frontend/src/components/RightPanel.jsx)**:
-  - URL paste input, move navigation buttons (first, prev, next, last, auto-play), interactive move history list, accuracy comparison bars, and move classification badges.
+  - URL paste input, move navigation controls with Play/Pause auto-play, Web Audio move sound synthesis, interactive move history list, accuracy comparison bars, and move classification badges.
 - **[SettingsModal.jsx](file:///c:/Users/hack/Documents/chesspgn/frontend/src/components/SettingsModal.jsx)**:
-  - Allows adjusting Stockfish engine depth (depth 5 to 18) and toggling application theme.
+  - Comprehensive customization modal for App Theme, Engine Depth, Board Palette, Move Arrows, Coordinates, Sound Effects, Auto-Play Speed, and Figurine Notation.
 
 ---
 
 ## Running & Testing the Project
 
 ### Local URLs
-- **Backend API**: `http://127.0.0.1:8001`
-- **Frontend App**: `http://127.0.0.1:8000`
+- **Backend API**: `http://127.0.0.1:8000`
+- **Frontend App**: `http://127.0.0.1:5173`
 
 ### Commands
 
@@ -111,3 +115,4 @@ chesspgn/
 | Run Backend Tests | `cd backend && venv\Scripts\python.exe -m unittest test_main.py` |
 | Lint Frontend | `cd frontend && npm run lint` |
 | Build Frontend | `cd frontend && npm run build` |
+
