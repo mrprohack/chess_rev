@@ -245,3 +245,25 @@ input:checked + .slider:before {
   border-color: var(--text-60);
 }
 
+.test-sound-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-input);
+  color: var(--text-80);
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.test-sound-btn:hover {
+  background: var(--bg-panel-alt);
+  color: var(--text-100);
+  border-color: var(--accent-color, #81b64c);
+}
+
+

@@ -18,6 +18,8 @@ function App() {
   const [showArrows, setShowArrows] = useState(() => localStorage.getItem('chess_showArrows') !== 'false');
   const [showCoordinates, setShowCoordinates] = useState(() => localStorage.getItem('chess_showCoordinates') !== 'false');
   const [soundEnabled, setSoundEnabled] = useState(() => localStorage.getItem('chess_soundEnabled') !== 'false');
+  const [soundVolume, setSoundVolume] = useState(() => Number(localStorage.getItem('chess_soundVolume') ?? 0.8));
+  const [soundTheme, setSoundTheme] = useState(() => localStorage.getItem('chess_soundTheme') || 'classic');
   const [autoPlaySpeed, setAutoPlaySpeed] = useState(() => Number(localStorage.getItem('chess_autoPlaySpeed')) || 1000);
   const [figurineNotation, setFigurineNotation] = useState(() => localStorage.getItem('chess_figurineNotation') !== 'false');
 
@@ -47,6 +49,8 @@ function App() {
   useEffect(() => { localStorage.setItem('chess_showArrows', showArrows); }, [showArrows]);
   useEffect(() => { localStorage.setItem('chess_showCoordinates', showCoordinates); }, [showCoordinates]);
   useEffect(() => { localStorage.setItem('chess_soundEnabled', soundEnabled); }, [soundEnabled]);
+  useEffect(() => { localStorage.setItem('chess_soundVolume', soundVolume); }, [soundVolume]);
+  useEffect(() => { localStorage.setItem('chess_soundTheme', soundTheme); }, [soundTheme]);
   useEffect(() => { localStorage.setItem('chess_autoPlaySpeed', autoPlaySpeed); }, [autoPlaySpeed]);
   useEffect(() => { localStorage.setItem('chess_figurineNotation', figurineNotation); }, [figurineNotation]);
 
@@ -99,6 +103,8 @@ function App() {
           isFlipped={isFlipped}
           onToggleFlip={() => setIsFlipped(prev => !prev)}
           soundEnabled={soundEnabled}
+          soundVolume={soundVolume}
+          soundTheme={soundTheme}
           autoPlaySpeed={autoPlaySpeed}
           figurineNotation={figurineNotation}
         />
@@ -118,6 +124,10 @@ function App() {
         setShowCoordinates={setShowCoordinates}
         soundEnabled={soundEnabled}
         setSoundEnabled={setSoundEnabled}
+        soundVolume={soundVolume}
+        setSoundVolume={setSoundVolume}
+        soundTheme={soundTheme}
+        setSoundTheme={setSoundTheme}
         autoPlaySpeed={autoPlaySpeed}
         setAutoPlaySpeed={setAutoPlaySpeed}
         figurineNotation={figurineNotation}

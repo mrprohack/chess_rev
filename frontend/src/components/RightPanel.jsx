@@ -13,30 +13,12 @@ import {
   Pause
 } from 'lucide-react';
 
+import { playMoveSound } from '../utils/audio';
+
 const CLASS_COLORS = {
   brilliant: 'brilliant', great: 'great', best: 'best', excellent: 'excellent',
   good: 'good', inaccuracy: 'inaccuracy', mistake: 'mistake', miss: 'miss', blunder: 'blunder', book: 'book'
 };
-
-function playMoveAudio(soundEnabled) {
-  if (!soundEnabled) return;
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(520, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(160, ctx.currentTime + 0.07);
-    gain.gain.setValueAtTime(0.12, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.07);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.07);
-  } catch (e) {
-    void e;
-  }
-}
 
 const renderSan = (san, cls, figurineNotation = true) => {
   if (!san) return null;
@@ -82,6 +64,8 @@ export default function RightPanel({
   isFlipped,
   onToggleFlip,
   soundEnabled = true,
+  soundVolume = 0.8,
+  soundTheme = 'classic',
   autoPlaySpeed = 1000,
   figurineNotation = true
 }) {
@@ -95,10 +79,11 @@ export default function RightPanel({
   // Play audio on move index changes
   useEffect(() => {
     if (prevMoveIndexRef.current !== currentMoveIndex) {
-      playMoveAudio(soundEnabled);
+      const moveObj = currentMoveIndex > 0 && gameData?.moves ? gameData.moves[currentMoveIndex - 1] : null;
+      playMoveSound(moveObj, soundEnabled, soundVolume, soundTheme);
       prevMoveIndexRef.current = currentMoveIndex;
     }
-  }, [currentMoveIndex, soundEnabled]);
+  }, [currentMoveIndex, soundEnabled, soundVolume, soundTheme, gameData]);
 
   // Auto-play interval effect
   useEffect(() => {

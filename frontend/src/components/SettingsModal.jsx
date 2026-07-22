@@ -1,5 +1,6 @@
 import React from 'react';
-import { X } from 'lucide-react';
+import { X, Volume2 } from 'lucide-react';
+import { playMoveSound } from '../utils/audio';
 import './SettingsModal.css';
 
 export default function SettingsModal({
@@ -17,6 +18,10 @@ export default function SettingsModal({
   setShowCoordinates,
   soundEnabled,
   setSoundEnabled,
+  soundVolume = 0.8,
+  setSoundVolume,
+  soundTheme = 'classic',
+  setSoundTheme,
   autoPlaySpeed,
   setAutoPlaySpeed,
   figurineNotation,
@@ -39,11 +44,27 @@ export default function SettingsModal({
     { id: 'glass', label: 'Cyber', light: '#3A3F51', dark: '#262936' },
   ];
 
+  const soundThemes = [
+    { id: 'classic', label: 'Classic' },
+    { id: 'soft', label: 'Soft' },
+    { id: 'arcade', label: 'Arcade' }
+  ];
+
   const speeds = [
     { value: 2000, label: 'Slow (2s)' },
     { value: 1000, label: 'Normal (1s)' },
     { value: 500, label: 'Fast (0.5s)' },
   ];
+
+  const handleTestSound = (type = 'move') => {
+    const sampleMoves = {
+      move: { san: 'e4' },
+      capture: { san: 'Nxf7' },
+      check: { san: 'Qh5+' },
+      checkmate: { san: 'Qxf7#' }
+    };
+    playMoveSound(sampleMoves[type] || sampleMoves.move, true, soundVolume, soundTheme);
+  };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -172,6 +193,69 @@ export default function SettingsModal({
                 <span className="slider round"></span>
               </label>
             </div>
+
+            {soundEnabled && (
+              <>
+                <div className="setting-row" style={{ marginTop: '14px' }}>
+                  <label htmlFor="sound-volume-input">Sound Volume ({Math.round(soundVolume * 100)}%)</label>
+                  <div className="slider-group">
+                    <input 
+                      id="sound-volume-input"
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={soundVolume}
+                      onChange={e => setSoundVolume(parseFloat(e.target.value))}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                </div>
+
+                <div className="setting-row" style={{ marginTop: '14px' }}>
+                  <label>Sound Profile</label>
+                  <div className="toggle-group">
+                    {soundThemes.map(st => (
+                      <button
+                        key={st.id}
+                        type="button"
+                        className={`toggle-btn ${soundTheme === st.id ? 'active' : ''}`}
+                        onClick={() => setSoundTheme(st.id)}
+                      >
+                        {st.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="setting-row" style={{ marginTop: '14px' }}>
+                  <label>Preview Sound</label>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button
+                      type="button"
+                      className="test-sound-btn"
+                      onClick={() => handleTestSound('move')}
+                    >
+                      <Volume2 size={14} style={{ marginRight: '4px' }} /> Move
+                    </button>
+                    <button
+                      type="button"
+                      className="test-sound-btn"
+                      onClick={() => handleTestSound('capture')}
+                    >
+                      Capture
+                    </button>
+                    <button
+                      type="button"
+                      className="test-sound-btn"
+                      onClick={() => handleTestSound('check')}
+                    >
+                      Check
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
 
             <div className="setting-row" style={{ marginTop: '14px' }}>
               <label htmlFor="autoplay-speed-select">Auto-Play Speed</label>
