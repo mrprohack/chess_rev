@@ -25,7 +25,15 @@ export default function SettingsModal({
   autoPlaySpeed,
   setAutoPlaySpeed,
   figurineNotation,
-  setFigurineNotation
+  setFigurineNotation,
+  chessEngine,
+  setChessEngine,
+  maxTime,
+  setMaxTime,
+  numLines,
+  setNumLines,
+  threads,
+  setThreads
 }) {
   React.useEffect(() => {
     const handleKeyDown = (e) => {
@@ -77,9 +85,72 @@ export default function SettingsModal({
         </div>
         
         <div className="modal-body">
+          {/* Section: Analysis */}
+          <div className="settings-section">
+            <h3 className="section-title" style={{ textTransform: 'uppercase', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>ANALYSIS</h3>
+            
+            <div className="setting-row" style={{ marginTop: '14px' }}>
+              <label htmlFor="engine-select">Chess Engine</label>
+              <select 
+                id="engine-select" 
+                className="setting-select" 
+                value={chessEngine} 
+                onChange={(e) => setChessEngine(e.target.value)}
+              >
+                <option value="stockfish18">Stockfish 18 (108MB download)</option>
+                <option value="stockfish18lite">Stockfish 18 Lite (7MB download)</option>
+                <option value="torch4">Torch 4 (73MB download)</option>
+                <option value="torch4lite">Torch 4 Lite (6MB download)</option>
+                <option value="off">Engine Off</option>
+              </select>
+            </div>
+
+            <div className="setting-row" style={{ marginTop: '14px' }}>
+              <label htmlFor="max-time-select">Maximum Time</label>
+              <select 
+                id="max-time-select" 
+                className="setting-select" 
+                value={maxTime} 
+                onChange={(e) => setMaxTime(Number(e.target.value))}
+              >
+                <option value={1}>1 sec</option>
+                <option value={3}>3 sec</option>
+                <option value={5}>5 sec</option>
+                <option value={10}>10 sec</option>
+                <option value={0}>Unlimited</option>
+              </select>
+            </div>
+
+            <div className="setting-row" style={{ marginTop: '14px' }}>
+              <label htmlFor="num-lines-select">Number of Lines</label>
+              <select 
+                id="num-lines-select" 
+                className="setting-select" 
+                value={numLines} 
+                onChange={(e) => setNumLines(Number(e.target.value))}
+              >
+                {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </div>
+
+            <div className="setting-row" style={{ marginTop: '14px' }}>
+              <label htmlFor="threads-input">Threads</label>
+              <input 
+                id="threads-input"
+                type="number" 
+                className="setting-input" 
+                min="1" 
+                max="32"
+                value={threads}
+                onChange={(e) => setThreads(Number(e.target.value))}
+                style={{ width: '60px', padding: '6px', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              />
+            </div>
+          </div>
+
           {/* Section: Appearance */}
           <div className="settings-section">
-            <h3 className="section-title">Appearance & Analysis</h3>
+            <h3 className="section-title" style={{ textTransform: 'uppercase', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Appearance</h3>
             
             <div className="setting-row" role="group" aria-labelledby="theme-label">
               <label id="theme-label">App Theme</label>

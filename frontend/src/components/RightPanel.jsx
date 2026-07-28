@@ -67,7 +67,11 @@ export default function RightPanel({
   soundVolume = 0.8,
   soundTheme = 'classic',
   autoPlaySpeed = 1000,
-  figurineNotation = true
+  figurineNotation = true,
+  chessEngine = 'stockfish18',
+  maxTime = 5,
+  numLines = 3,
+  threads = 1
 }) {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
@@ -124,7 +128,14 @@ export default function RightPanel({
       const response = await fetch('http://127.0.0.1:8001/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: finalUrl, depth: engineDepth || 10 })
+        body: JSON.stringify({ 
+          url: finalUrl, 
+          depth: engineDepth || 10,
+          engine: chessEngine,
+          maxTime: maxTime,
+          numLines: numLines,
+          threads: threads
+        })
       });
       if (!response.ok) {
         const err = await response.json();
@@ -262,7 +273,13 @@ export default function RightPanel({
       <div className="engine-info">
         <span>Starting Position</span>
         <span className="engine-name">
-          <Cpu size={11} aria-hidden="true" /> Stockfish 18 Lite (Depth {engineDepth || 10})
+          <Cpu size={11} aria-hidden="true" /> {
+            chessEngine === 'stockfish18' ? 'Stockfish 18' :
+            chessEngine === 'stockfish18lite' ? 'Stockfish 18 Lite' :
+            chessEngine === 'torch4' ? 'Torch 4' :
+            chessEngine === 'torch4lite' ? 'Torch 4 Lite' :
+            'Engine Off'
+          } (Depth {engineDepth || 10})
           {onOpenSettings && (
             <button
               type="button"

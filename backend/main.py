@@ -26,12 +26,16 @@ HEADERS = {"User-Agent": "ChessPgnReviewApp/1.0 (https://github.com/chesspgn)"}
 class AnalyzeRequest(BaseModel):
     url: str
     depth: Optional[int] = 10
+    engine: Optional[str] = "stockfish18"
+    maxTime: Optional[int] = 5
+    numLines: Optional[int] = 3
+    threads: Optional[int] = 1
 
 @app.get("/")
 async def root():
     return {"message": "Chess API is running. Please open the Frontend Web UI at http://127.0.0.1:8000"}
 
-def parse_pgn(pgn_str: str, engine_depth: int = 10):
+def parse_pgn(pgn_str: str, engine_depth: int = 10, engine_id: str = "stockfish18", max_time: int = 5, num_lines: int = 3, threads: int = 1):
     pgn_io = io.StringIO(pgn_str)
     game = chess.pgn.read_game(pgn_io)
     
@@ -49,7 +53,15 @@ def parse_pgn(pgn_str: str, engine_depth: int = 10):
     
     engine_path = os.path.join(os.path.dirname(__file__), "stockfish", "stockfish", "stockfish-windows-x86-64-avx2.exe")
     try:
-        engine = chess.engine.SimpleEngine.popen_uci(engine_path)
+        if engine_id == "off":
+            engine = None
+        else:
+            engine = chess.engine.SimpleEngine.popen_uci(engine_path)
+            # Apply user configs
+            engine.configure({"Threads": max(1, threads), "MultiPV": max(1, num_lines)})
+            if "lite" in engine_id.lower():
+                # "Lite" uses classical evaluation instead of heavy NNUE
+                engine.configure({"Use NNUE": False})
     except Exception as e:
         print(f"Engine error: {e}")
         engine = None
@@ -69,7 +81,9 @@ def parse_pgn(pgn_str: str, engine_depth: int = 10):
             score_before = 0
             best_move_uci = None
             if engine:
-                info = engine.analyse(board, chess.engine.Limit(depth=engine_depth))
+                time_limit = max_time if max_time > 0 else None
+                limit = chess.engine.Limit(depth=engine_depth, time=time_limit)
+                info = engine.analyse(board, limit)
                 score_before = info["score"].white().score(mate_score=10000)
                 if "pv" in info and len(info["pv"]) > 0:
                     best_move_uci = info["pv"][0].uci()
@@ -82,7 +96,9 @@ def parse_pgn(pgn_str: str, engine_depth: int = 10):
             
             score_after = 0
             if engine:
-                info = engine.analyse(board, chess.engine.Limit(depth=engine_depth))
+                time_limit = max_time if max_time > 0 else None
+                limit = chess.engine.Limit(depth=engine_depth, time=time_limit)
+                info = engine.analyse(board, limit)
                 score_after = info["score"].white().score(mate_score=10000)
                 
             color = "white" if board.turn == chess.BLACK else "black"
@@ -199,7 +215,7 @@ async def analyze_game(req: AnalyzeRequest):
                 raise HTTPException(status_code=404, detail="Game not found on Lichess")
             res.raise_for_status()
             
-            game_data = parse_pgn(res.text, engine_depth)
+            game_data = parse_pgn(res.text, engine_depth, req.engine, req.maxTime, req.numLines, req.threads)
             if not game_data:
                 raise HTTPException(status_code=422, detail="Failed to parse PGN data from Lichess")
                 
@@ -246,7 +262,7 @@ async def analyze_game(req: AnalyzeRequest):
             if not pgn_str:
                 raise HTTPException(status_code=404, detail="Game PGN not found in Chess.com archive")
                 
-            game_data = parse_pgn(pgn_str, engine_depth)
+            game_data = parse_pgn(pgn_str, engine_depth, req.engine, req.maxTime, req.numLines, req.threads)
             if not game_data:
                 raise HTTPException(status_code=422, detail="Failed to parse PGN data from Chess.com")
                 

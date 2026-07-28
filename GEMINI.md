@@ -17,6 +17,8 @@ chesspgn/
 ├── run_all.bat                 # Windows batch script to launch backend & frontend
 ├── run_all.ps1                 # PowerShell script to launch backend & frontend
 ├── push.bat                    # Git convenience script
+├── temp_test/                  # Temporary testing & experiment folder (gitignored)
+│   └── README.md               # Guide for temp testing directory
 │
 ├── .github/
 │   └── workflows/

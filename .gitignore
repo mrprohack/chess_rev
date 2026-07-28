@@ -17,3 +17,5 @@ stockfish/
 graphify-out/
 .agents/
 games.db
+temp_test/
+

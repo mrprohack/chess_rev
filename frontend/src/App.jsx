@@ -23,6 +23,12 @@ function App() {
   const [autoPlaySpeed, setAutoPlaySpeed] = useState(() => Number(localStorage.getItem('chess_autoPlaySpeed')) || 1000);
   const [figurineNotation, setFigurineNotation] = useState(() => localStorage.getItem('chess_figurineNotation') !== 'false');
 
+  // New Analysis Engine Settings
+  const [chessEngine, setChessEngine] = useState(() => localStorage.getItem('chess_engineSelect') || 'stockfish18');
+  const [maxTime, setMaxTime] = useState(() => Number(localStorage.getItem('chess_maxTime')) || 5);
+  const [numLines, setNumLines] = useState(() => Number(localStorage.getItem('chess_numLines')) || 3);
+  const [threads, setThreads] = useState(() => Number(localStorage.getItem('chess_threads')) || 1);
+
   useEffect(() => {
     localStorage.setItem('chess_theme', theme);
     const applyTheme = (t) => {
@@ -53,6 +59,10 @@ function App() {
   useEffect(() => { localStorage.setItem('chess_soundTheme', soundTheme); }, [soundTheme]);
   useEffect(() => { localStorage.setItem('chess_autoPlaySpeed', autoPlaySpeed); }, [autoPlaySpeed]);
   useEffect(() => { localStorage.setItem('chess_figurineNotation', figurineNotation); }, [figurineNotation]);
+  useEffect(() => { localStorage.setItem('chess_engineSelect', chessEngine); }, [chessEngine]);
+  useEffect(() => { localStorage.setItem('chess_maxTime', maxTime); }, [maxTime]);
+  useEffect(() => { localStorage.setItem('chess_numLines', numLines); }, [numLines]);
+  useEffect(() => { localStorage.setItem('chess_threads', threads); }, [threads]);
 
   // Global Arrow Key Navigation for Chess Moves
   useEffect(() => {
@@ -107,6 +117,10 @@ function App() {
           soundTheme={soundTheme}
           autoPlaySpeed={autoPlaySpeed}
           figurineNotation={figurineNotation}
+          chessEngine={chessEngine}
+          maxTime={maxTime}
+          numLines={numLines}
+          threads={threads}
         />
       </div>
       <SettingsModal 
@@ -132,6 +146,14 @@ function App() {
         setAutoPlaySpeed={setAutoPlaySpeed}
         figurineNotation={figurineNotation}
         setFigurineNotation={setFigurineNotation}
+        chessEngine={chessEngine}
+        setChessEngine={setChessEngine}
+        maxTime={maxTime}
+        setMaxTime={setMaxTime}
+        numLines={numLines}
+        setNumLines={setNumLines}
+        threads={threads}
+        setThreads={setThreads}
       />
     </div>
   );

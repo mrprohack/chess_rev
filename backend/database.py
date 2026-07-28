@@ -1,6 +1,5 @@
-from sqlalchemy import create_engine, Column, String, JSON, DateTime
+from sqlalchemy import create_engine, Column, String, JSON
 from sqlalchemy.orm import declarative_base, sessionmaker
-from datetime import datetime
 
 DATABASE_URL = "sqlite:///./games.db"
 
@@ -14,6 +13,5 @@ class GameRecord(Base):
     url = Column(String, primary_key=True, index=True)
     depth = Column(String, primary_key=True, index=True) # Store depth as part of the key
     data = Column(JSON)
-    created_at = Column(DateTime, default=datetime.utcnow)
 
 Base.metadata.create_all(bind=engine)
