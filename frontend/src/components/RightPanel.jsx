@@ -125,7 +125,8 @@ export default function RightPanel({
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://127.0.0.1:8001/api/analyze', {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001';
+      const response = await fetch(`${apiBase}/api/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

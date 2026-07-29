@@ -16,6 +16,7 @@ stockfish/
 # Agent and local files
 graphify-out/
 .agents/
+.opencode/
 games.db
 temp_test/
 
