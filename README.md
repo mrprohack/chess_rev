@@ -1,168 +1,225 @@
-# ♟️ Chess Game Review Clone
+# Chess Game Review
 
-A full-stack Chess.com game review clone that lets you paste any Chess.com game URL and instantly replay it move-by-move in a beautiful dark-mode UI.
+A full-stack Chess.com / Lichess game review app. Paste a game URL and instantly replay it move-by-move with Stockfish analysis in a dark-mode UI.
 
----
+## Features
 
-## 🚀 Features
+- **Paste & Analyze** — Paste any Chess.com or Lichess game URL
+- **Stockfish Engine** — Move classification (Best/Excellent/Good/Inaccuracy/Mistake/Blunder/Brilliant/Great/Miss/Book)
+- **Step-by-Step Replay** — Navigate moves with controls or click any move in the list
+- **Custom Chess Board** — FEN-based board renderer with SVG piece animations
+- **Player Info** — Names, ratings, and accuracy stats
+- **Move List** — Full annotated move list with quality badges
+- **Dark Mode UI** — Chess.com-inspired dark theme
 
-- **Paste & Analyze** — Paste any Chess.com live game URL and fetch the full game instantly
-- **Step-by-Step Replay** — Navigate through every move with `⏮ ◀ ▶ ⏭` controls or click any move directly in the list
-- **Custom Chess Board** — Pixel-perfect green-and-cream board with Unicode pieces, built from scratch (no library dependencies)
-- **Player Info** — Displays player names and ratings fetched directly from the Chess.com API
-- **Move List** — Full annotated move list with move quality badges (`!`, `?`, `!!`, `??`)
-- **Dark Mode UI** — Chess.com-inspired dark theme with `#312E2B` background
-
----
-
-## 🏗️ Project Structure
+## Project Structure
 
 ```
-chesspgn/
-├── chess-clone/          # React frontend (Vite)
-│   └── src/
-│       ├── App.jsx
-│       ├── App.css
-│       └── components/
-│           ├── BoardArea.jsx     # Player info + chess board
-│           ├── ChessBoard.jsx    # Custom FEN-based board renderer
-│           ├── RightPanel.jsx    # Move list, URL input, controls
-│           └── Sidebar.jsx
+chess_rev/
+├── backend/                 # Python FastAPI backend
+│   ├── main.py              # /api/analyze endpoint, PGN parsing, Stockfish integration
+│   ├── database.py          # SQLAlchemy models + SQLite
+│   ├── stockfish/           # Stockfish binary
+│   └── venv/                # Python virtual environment
 │
-├── chess-backend/        # Python FastAPI backend
-│   └── main.py           # /api/analyze endpoint
+├── frontend/                # React + Vite frontend
+│   ├── src/
+│   │   ├── App.jsx          # Root layout
+│   │   ├── components/
+│   │   │   ├── BoardArea.jsx    # Player bars, eval bar
+│   │   │   ├── ChessBoard.jsx   # Custom board renderer with animations
+│   │   │   ├── RightPanel.jsx   # URL input, move list, controls
+│   │   │   ├── Sidebar.jsx      # Left icon nav
+│   │   │   └── SettingsModal.jsx
+│   │   └── App.css
+│   ├── public/pieces_alt/   # SVG chess pieces
+│   └── dist/                # Production build output
 │
-└── chess-review-scraper/ # Original scraping scripts & tools
+└── run_all.bat              # Start both services (Windows)
 ```
 
----
+## Tech Stack
 
-## ⚙️ Tech Stack
+| Layer    | Technology                                    |
+|----------|-----------------------------------------------|
+| Frontend | React 19, Vite 8, Vanilla CSS                 |
+| Board    | Custom `ChessBoard.jsx` (FEN parser + SVG)    |
+| Backend  | Python, FastAPI, python-chess, Stockfish 18   |
+| Database | SQLite via SQLAlchemy                         |
+| Data     | Chess.com API, Lichess API                    |
 
-| Layer     | Technology                          |
-|-----------|-------------------------------------|
-| Frontend  | React 19, Vite, Vanilla CSS         |
-| Board     | Custom `ChessBoard.jsx` (FEN parser + Unicode pieces) |
-| Backend   | Python, FastAPI, `python-chess`     |
-| Data      | Chess.com Public API + Internal API |
+## Setup
 
----
-
-## 🛠️ Setup & Running
-
-### 1. Backend (FastAPI)
+### Backend
 
 ```bash
-cd chess-backend
+cd backend
+python3 -m venv venv
+source venv/bin/activate      # Linux/Mac
+# venv\Scripts\activate       # Windows
 
-# Create and activate virtual environment
-python -m venv venv
-venv\Scripts\activate       # Windows
-# source venv/bin/activate  # Mac/Linux
+pip install fastapi uvicorn requests python-chess sqlalchemy
 
-# Install dependencies
-pip install fastapi uvicorn requests python-chess
-
-# Start the API server
-uvicorn main:app --port 8000 --reload
+python main.py
 ```
 
-The backend will be available at **http://localhost:8000**
+Backend runs at **http://127.0.0.1:8001**
 
-### 2. Frontend (React)
+### Frontend (Development)
 
 ```bash
-cd chess-clone
-
-# Install dependencies
+cd frontend
 npm install
-
-# Start dev server
 npm run dev
 ```
 
-The app will be available at **http://localhost:5173**
+Frontend runs at **http://127.0.0.1:8000**
 
----
+### Frontend (Production Build)
 
-## 🎮 How to Use
+```bash
+cd frontend
+npm run build
+cp -r dist /var/www/reviewchess
+```
 
-1. Open **http://localhost:5173** in your browser
-2. Copy any Chess.com live game URL, for example:
-   ```
-   https://www.chess.com/game/live/170804338698
-   ```
-3. Paste it in the input box at the top of the right panel
-4. Click the green **Analyze** button
-5. Use the `⏮ ◀ ▶ ⏭` buttons to step through moves, or click any move in the list
+## Environment Variables
 
----
+Create `frontend/.env`:
 
-## 🔌 API Reference
+```
+VITE_API_URL=http://127.0.0.1:8001     # local dev
+VITE_API_URL=https://testapi.reviewchess.in  # production
+```
+
+## Production Deployment (Nginx)
+
+Nginx serves the built frontend and proxies API requests:
+
+```nginx
+upstream chess_backend {
+    server 127.0.0.1:8001;
+}
+
+server {
+    listen 8000;
+    server_name test.reviewchess.in;
+
+    root /var/www/reviewchess;
+    index index.html;
+
+    location /api/ {
+        proxy_pass http://chess_backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+```
+
+### Updating Frontend in Production
+
+```bash
+cd frontend
+npm run build
+cp -r dist/* /var/www/reviewchess/
+```
+
+## Services (systemd)
+
+Both services auto-start on boot and restart on crash.
+
+### Backend Service
+
+```bash
+# Status
+systemctl status chess-backend
+
+# Restart
+systemctl restart chess-backend
+
+# View logs
+journalctl -u chess-backend -f
+```
+
+Service file: `/etc/systemd/system/chess-backend.service`
+
+### Nginx (Frontend)
+
+```bash
+# Status
+systemctl status nginx
+
+# Restart
+systemctl restart nginx
+
+# Reload config
+systemctl reload nginx
+```
+
+### Full Restart
+
+```bash
+systemctl restart chess-backend nginx
+```
+
+## API Reference
 
 ### `POST /api/analyze`
-
-Fetches and parses a Chess.com game by URL.
 
 **Request Body:**
 ```json
 {
-  "url": "https://www.chess.com/game/live/170804338698"
+  "url": "https://www.chess.com/game/live/170804338698",
+  "depth": 10,
+  "engine": "stockfish18",
+  "maxTime": 5,
+  "numLines": 3,
+  "threads": 1
 }
 ```
 
 **Response:**
 ```json
 {
-  "white": "mattgarza779",
-  "black": "mkv101",
-  "white_rating": 522,
-  "black_rating": 537,
-  "result": "0-1",
+  "white": "player1",
+  "black": "player2",
+  "white_rating": 1500,
+  "black_rating": 1450,
+  "result": "1-0",
   "moves": [
     {
       "number": 1,
       "color": "white",
-      "notation": "d4",
-      "classification": "",
-      "fen": "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1"
+      "notation": "e4",
+      "classification": "Book",
+      "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"
     }
-  ]
+  ],
+  "accuracy": { "white": 95.2, "black": 88.7 },
+  "counts": { ... }
 }
 ```
 
----
-
-## 📦 How it Works
+## Architecture
 
 ```
-User pastes URL
-       │
-       ▼
-React Frontend (port 5173)
-  POST /api/analyze  ──────────►  FastAPI Backend (port 8000)
-                                        │
-                                        ├─ Extract Game ID from URL
-                                        ├─ Hit Chess.com /callback/live/game/{id}
-                                        │   → Gets player names + game timestamp
-                                        ├─ Hit Chess.com Public API
-                                        │   → Gets official PGN for that month
-                                        └─ Parse PGN with python-chess
-                                            → Returns moves + FEN for each position
-       ◄────────────────────────────────┘
-React updates board + move list
+Browser → Nginx (port 8000)
+  ├── /              → Static frontend files
+  └── /api/*         → FastAPI (port 8001)
+                         ├── Chess.com API / Lichess API
+                         ├── python-chess (PGN parsing)
+                         └── Stockfish 18 (engine analysis)
 ```
 
----
+## Notes
 
-## 🐛 Known Issues / Notes
-
-- The Chess.com API occasionally rate-limits requests; if a game fails to load, try again after a few seconds
-- The custom board uses Unicode chess pieces — no external image assets needed
-- `node_modules/` and `venv/` are excluded from the repo; run `npm install` and `pip install` after cloning
-
----
-
-## 📄 License
-
-MIT — free to use and modify.
+- Stockfish binary auto-downloads on first run
+- Games are cached in SQLite (`games.db`) keyed by URL + depth
+- Chess.com API may rate-limit; cached results are returned instantly
+- Lichess games supported via direct PGN export
