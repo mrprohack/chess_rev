@@ -8,10 +8,58 @@ import io
 import os
 import datetime
 import math
+import platform
+import urllib.request
+import zipfile
+import tarfile
+import stat
 from typing import Optional
 from database import SessionLocal, GameRecord
 
 app = FastAPI()
+
+def ensure_stockfish():
+    is_windows = platform.system() == "Windows"
+    binary_name = "stockfish-windows-x86-64-avx2.exe" if is_windows else "stockfish-ubuntu-x86-64-avx2"
+    base_dir = os.path.join(os.path.dirname(__file__), "stockfish", "stockfish")
+    os.makedirs(base_dir, exist_ok=True)
+    engine_path = os.path.join(base_dir, binary_name)
+    
+    if os.path.exists(engine_path):
+        return
+        
+    print(f"Stockfish not found at {engine_path}. Downloading...")
+    if is_windows:
+        url = "https://github.com/official-stockfish/Stockfish/releases/download/sf_18/stockfish-windows-x86-64-avx2.zip"
+        archive_path = os.path.join(base_dir, "stockfish.zip")
+    else:
+        url = "https://github.com/official-stockfish/Stockfish/releases/download/sf_18/stockfish-ubuntu-x86-64-avx2.tar"
+        archive_path = os.path.join(base_dir, "stockfish.tar")
+        
+    urllib.request.urlretrieve(url, archive_path)
+    
+    if is_windows:
+        with zipfile.ZipFile(archive_path, 'r') as zip_ref:
+            for file_info in zip_ref.infolist():
+                if file_info.filename.endswith(binary_name):
+                    file_info.filename = binary_name
+                    zip_ref.extract(file_info, base_dir)
+    else:
+        with tarfile.open(archive_path) as tar_ref:
+            for member in tar_ref.getmembers():
+                if member.name.endswith(binary_name):
+                    member.name = binary_name
+                    tar_ref.extract(member, path=base_dir)
+        st = os.stat(engine_path)
+        os.chmod(engine_path, st.st_mode | stat.S_IEXEC)
+        
+    os.remove(archive_path)
+    print("Stockfish downloaded and extracted successfully.")
+
+@app.on_event("startup")
+async def startup_event():
+    ensure_stockfish()
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -51,7 +99,10 @@ def parse_pgn(pgn_str: str, engine_depth: int = 10, engine_id: str = "stockfish1
     white_caps_sum = black_caps_sum = 0
     white_moves_count = black_moves_count = 0
     
-    engine_path = os.path.join(os.path.dirname(__file__), "stockfish", "stockfish", "stockfish-windows-x86-64-avx2.exe")
+    is_windows = platform.system() == "Windows"
+    binary_name = "stockfish-windows-x86-64-avx2.exe" if is_windows else "stockfish-ubuntu-x86-64-avx2"
+    engine_path = os.path.join(os.path.dirname(__file__), "stockfish", "stockfish", binary_name)
+    # ponytail: skipped config file abstraction, simple OS check is enough
     try:
         if engine_id == "off":
             engine = None
