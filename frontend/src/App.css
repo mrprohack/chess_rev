@@ -751,6 +751,7 @@ body {
 @media (max-width: 900px) {
   body {
     overflow-y: auto;
+    overflow-x: hidden;
   }
   #root, .layout-container {
     height: auto;
@@ -759,16 +760,186 @@ body {
   .main-content {
     flex-direction: column;
     overflow: visible;
-    padding: 16px 12px;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 16px;
+    padding: 14px 12px calc(82px + env(safe-area-inset-bottom));
     height: auto;
   }
+  .board-container {
+    width: 100%;
+    max-width: 520px;
+  }
   .board-wrapper {
-    width: min(calc(100vw - 32px), 520px);
+    gap: 8px;
+    width: min(calc(100vw - 24px), 520px);
+  }
+  .eval-bar-container {
+    width: 18px;
   }
   .right-panel {
     width: 100%;
     max-width: 520px;
-    height: 580px;
+    min-width: 0;
+    height: min(64vh, 580px);
+    min-height: 430px;
+  }
+  .sidebar {
+    position: fixed;
+    inset: auto 0 0;
+    width: 100%;
+    height: calc(64px + env(safe-area-inset-bottom));
+    padding: 8px 16px env(safe-area-inset-bottom);
+    border-top: 1px solid var(--glass-border);
+    border-right: 0;
+    flex-direction: row;
+    justify-content: center;
+    background: color-mix(in srgb, var(--bg-surface) 94%, transparent);
+    backdrop-filter: blur(18px);
+    box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.22);
+  }
+  .sidebar-brand {
+    display: none;
+  }
+  .sidebar-nav-list {
+    width: min(100%, 420px);
+    flex-direction: row;
+    justify-content: space-around;
+    gap: 6px;
+  }
+  .sidebar-btn {
+    width: 44px;
+    height: 44px;
+    padding: 10px;
   }
 }
 
+@media (max-width: 560px) {
+  body {
+    font-size: 14px;
+  }
+  .main-content {
+    padding: 10px 8px calc(82px + env(safe-area-inset-bottom));
+    gap: 12px;
+  }
+  .board-wrapper {
+    width: calc(100vw - 16px);
+    gap: 6px;
+  }
+  .eval-bar-container {
+    width: 14px;
+    border-radius: 3px;
+  }
+  .eval-bar-score {
+    font-size: 8px;
+  }
+  .player-bar {
+    margin: 3px 0;
+    padding: 7px 8px;
+    border-radius: 7px;
+  }
+  .player-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 13px;
+  }
+  .player-details {
+    gap: 8px;
+    min-width: 0;
+  }
+  .player-name {
+    max-width: 190px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .player-timer {
+    padding: 5px 7px;
+    font-size: 0.95rem;
+  }
+  .player-timer svg {
+    display: none;
+  }
+  .right-panel {
+    border-radius: 10px;
+    height: min(60vh, 520px);
+    min-height: 400px;
+  }
+  .url-input-area {
+    padding: 10px;
+  }
+  .url-input-row {
+    gap: 6px;
+  }
+  .url-input {
+    min-width: 0;
+    padding: 11px 10px;
+    font-size: 16px;
+  }
+  .analyze-btn {
+    min-width: 80px;
+    padding: 11px 12px;
+    font-size: 0.82rem;
+  }
+  .panel-tab-sec {
+    padding: 10px 0;
+    font-size: 0.72rem;
+  }
+  .engine-info,
+  .accuracy-info {
+    padding: 8px 10px;
+    font-size: 0.72rem;
+  }
+  .engine-name {
+    max-width: 56%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .moves-list {
+    padding: 4px;
+  }
+  .move-num {
+    width: 28px;
+    padding-left: 3px;
+  }
+  .move-col {
+    padding: 9px 7px;
+    min-height: 40px;
+  }
+  .move-time {
+    display: none;
+  }
+  .panel-footer {
+    padding: 8px 10px;
+    gap: 7px;
+  }
+  .review-btn {
+    padding: 11px;
+    font-size: 0.9rem;
+  }
+  .controls-main {
+    gap: 2px;
+  }
+  .control-btn {
+    min-width: 38px;
+    min-height: 38px;
+    padding: 8px;
+  }
+}
+
+@media (max-width: 360px) {
+  .player-name {
+    max-width: 145px;
+  }
+  .controls > .control-btn {
+    display: none;
+  }
+  .controls-main {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .control-btn {
+    min-width: 42px;
+  }
+}
