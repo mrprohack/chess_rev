@@ -152,10 +152,6 @@ export default function RightPanel({
     }
   };
 
-  const handleKey = (e) => {
-    if (e.key === 'Enter') fetchGame();
-  };
-
   const maxMoves = gameData?.moves?.length || 0;
   const goToStart = () => { setIsPlaying(false); setCurrentMoveIndex(0); };
   const goToEnd = () => { setIsPlaying(false); setCurrentMoveIndex(maxMoves); };
@@ -182,14 +178,6 @@ export default function RightPanel({
     });
   }
 
-  const dummyMoves = [
-    { num: 1, w: 'e4', b: 'e5', wIndex: 1, bIndex: 2 },
-    { num: 2, w: 'Nf3', b: 'Nc6', wIndex: 3, bIndex: 4 },
-    { num: 3, w: 'Bc4', b: 'Bc5', wIndex: 5, bIndex: 6 },
-  ];
-
-  const displayMoves = gameData ? movePairs : dummyMoves;
-
   const whiteCounts = { brilliant: 0, great: 0, best: 0, excellent: 0, good: 0, inaccuracy: 0, mistake: 0, miss: 0, blunder: 0, book: 0 };
   const blackCounts = { brilliant: 0, great: 0, best: 0, excellent: 0, good: 0, inaccuracy: 0, mistake: 0, miss: 0, blunder: 0, book: 0 };
   
@@ -215,10 +203,17 @@ export default function RightPanel({
   ];
 
   return (
-    <div className="right-panel">
+    <div className="right-panel" aria-busy={loading}>
       {/* URL Input */}
       <div className="url-input-area">
-        <div className="url-input-row">
+        <div className="panel-heading">
+          <div>
+            <h1>Game review</h1>
+            <p>Paste a Chess.com or Lichess game link</p>
+          </div>
+          <span className={`engine-status ${loading ? 'is-busy' : ''}`}><span /> {loading ? 'Analyzing' : 'Ready'}</span>
+        </div>
+        <form className="url-input-row" onSubmit={(e) => { e.preventDefault(); fetchGame(); }}>
           <input
             className="url-input"
             type="url"
@@ -226,16 +221,15 @@ export default function RightPanel({
             autoComplete="off"
             spellCheck={false}
             aria-label="Game URL"
-            placeholder="e.g., https://www.chess.com/game/live/1234…"
+            placeholder="Paste game URL"
             value={url}
             onChange={e => setUrl(e.target.value)}
-            onKeyDown={handleKey}
           />
-          <button type="button" className="analyze-btn" onClick={fetchGame} disabled={loading}>
+          <button type="submit" className="analyze-btn" disabled={loading || !url.trim()}>
             {loading && <Loader2 size={14} className="spin" aria-hidden="true" style={{ animation: 'spin 2s linear infinite' }} />}
             {loading ? 'Loading…' : 'Analyze'}
           </button>
-        </div>
+        </form>
         {error && <div className="error-msg" role="alert">{error}</div>}
       </div>
 
@@ -245,6 +239,7 @@ export default function RightPanel({
           type="button"
           role="tab"
           aria-selected={activeTab === 'moves'}
+          aria-controls="moves-panel"
           className={`panel-tab-sec ${activeTab === 'moves' ? 'active' : ''}`}
           onClick={() => setActiveTab('moves')}
         >
@@ -254,6 +249,7 @@ export default function RightPanel({
           type="button"
           role="tab"
           aria-selected={activeTab === 'analysis'}
+          aria-controls="analysis-panel"
           className={`panel-tab-sec ${activeTab === 'analysis' ? 'active' : ''}`}
           onClick={() => setActiveTab('analysis')}
         >
@@ -263,6 +259,7 @@ export default function RightPanel({
           type="button"
           role="tab"
           aria-selected={activeTab === 'openings'}
+          aria-controls="openings-panel"
           className={`panel-tab-sec ${activeTab === 'openings' ? 'active' : ''}`}
           onClick={() => setActiveTab('openings')}
         >
@@ -304,8 +301,15 @@ export default function RightPanel({
 
       {/* Tab content view */}
       {activeTab === 'moves' && (
-        <div className="moves-list">
-          {displayMoves.map((m, idx) => (
+        <div className="moves-list panel-content" id="moves-panel" role="tabpanel">
+          {!gameData && (
+            <div className="empty-state">
+              <div className="empty-state-icon">♞</div>
+              <h2>Your review starts here</h2>
+              <p>Paste a game link above to see engine evaluations, move classifications, and accuracy.</p>
+            </div>
+          )}
+          {movePairs.map((m, idx) => (
             <div key={idx} className="move-row">
               <div className="move-num">{m.num}.</div>
 
@@ -351,7 +355,7 @@ export default function RightPanel({
             </div>
           ))}
 
-          <div className="stats-container">
+          {gameData && <div className="stats-container">
             {statRows.map((row) => {
               const w = whiteCounts[row.key];
               const b = blackCounts[row.key];
@@ -365,39 +369,47 @@ export default function RightPanel({
                 </div>
               );
             })}
-          </div>
+          </div>}
         </div>
       )}
 
       {activeTab === 'analysis' && (
-        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-60)', fontSize: '0.85rem' }}>
-          Interactive Stockfish evaluation graph & blunder timeline.
+        <div className="empty-state panel-content" id="analysis-panel" role="tabpanel">
+          <div className="empty-state-icon">⌁</div>
+          <h2>Analysis overview</h2>
+          <p>{gameData ? 'Use the move list to explore each engine evaluation.' : 'Analyze a game first to unlock its evaluation.'}</p>
         </div>
       )}
 
       {activeTab === 'openings' && (
-        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-60)', fontSize: '0.85rem' }}>
-          Opening Explorer & Win-Rate Statistics.
+        <div className="empty-state panel-content" id="openings-panel" role="tabpanel">
+          <div className="empty-state-icon">♙</div>
+          <h2>Opening explorer</h2>
+          <p>{gameData ? 'Opening details will appear when they are available for this game.' : 'Analyze a game to identify its opening.'}</p>
         </div>
       )}
 
       {/* Footer Controls */}
       <div className="panel-footer">
-        <button type="button" className="review-btn" onClick={() => fetchGame()}>
-          ★ Game Review
+        <div className="move-progress" aria-live="polite">
+          <span>Move</span>
+          <strong>{currentMoveIndex} / {maxMoves}</strong>
+        </div>
+        <button type="button" className="review-btn" onClick={() => fetchGame()} disabled={loading || !url.trim()}>
+          {loading ? 'Analyzing game…' : '★ Analyze again'}
         </button>
 
         <div className="controls">
           <button type="button" className="control-btn" title="Share" aria-label="Share game"><Share2 size={15} aria-hidden="true" /></button>
 
           <div className="controls-main">
-            <button type="button" className="control-btn" onClick={goToStart} title="Start (Home)" aria-label="First move"><SkipBack size={16} aria-hidden="true" /></button>
-            <button type="button" className="control-btn" onClick={goPrev} title="Previous (←)" aria-label="Previous move"><ChevronLeft size={16} aria-hidden="true" /></button>
-            <button type="button" className={`control-btn ${isPlaying ? 'active' : ''}`} onClick={togglePlay} title={isPlaying ? "Pause auto-play" : "Start auto-play"} aria-label="Auto play moves">
+            <button type="button" className="control-btn" onClick={goToStart} disabled={!gameData || currentMoveIndex === 0} title="Start (Home)" aria-label="First move"><SkipBack size={16} aria-hidden="true" /></button>
+            <button type="button" className="control-btn" onClick={goPrev} disabled={!gameData || currentMoveIndex === 0} title="Previous (←)" aria-label="Previous move"><ChevronLeft size={16} aria-hidden="true" /></button>
+            <button type="button" className={`control-btn play-control ${isPlaying ? 'active' : ''}`} onClick={togglePlay} disabled={!gameData} title={isPlaying ? "Pause auto-play" : "Start auto-play"} aria-label="Auto play moves">
               {isPlaying ? <Pause size={16} aria-hidden="true" /> : <Play size={16} aria-hidden="true" />}
             </button>
-            <button type="button" className="control-btn" onClick={goNext} title="Next (→)" aria-label="Next move"><ChevronRight size={16} aria-hidden="true" /></button>
-            <button type="button" className="control-btn" onClick={goToEnd} title="End (End)" aria-label="Last move"><SkipForward size={16} aria-hidden="true" /></button>
+            <button type="button" className="control-btn" onClick={goNext} disabled={!gameData || currentMoveIndex === maxMoves} title="Next (→)" aria-label="Next move"><ChevronRight size={16} aria-hidden="true" /></button>
+            <button type="button" className="control-btn" onClick={goToEnd} disabled={!gameData || currentMoveIndex === maxMoves} title="End (End)" aria-label="Last move"><SkipForward size={16} aria-hidden="true" /></button>
           </div>
 
           <button type="button" className={`control-btn ${isFlipped ? 'active' : ''}`} onClick={onToggleFlip} title={isFlipped ? "Flip board (Black perspective)" : "Flip board (White perspective)"} aria-label="Flip board perspective" aria-pressed={isFlipped}><RefreshCw size={15} aria-hidden="true" /></button>
