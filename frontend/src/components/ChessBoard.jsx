@@ -102,7 +102,8 @@ export default function ChessBoard({
   isFlipped = false,
   boardTheme = 'wood',
   showArrows = true,
-  showCoordinates = true
+  showCoordinates = true,
+  isJump = false
 }) {
   const [pieces, setPieces] = useState(() => syncPieces([], fen));
 
@@ -222,6 +223,7 @@ export default function ChessBoard({
           const left = `${displayFile * 12.5}%`;
           const top = `${displayRank * 12.5}%`;
           let className = 'chess-piece';
+          if (isJump) className += ' no-transition';
           if (p.status === 'captured') className += ' piece-captured';
           if (p.status === 'promoted') className += ' piece-promoted';
           

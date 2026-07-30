@@ -58,6 +58,12 @@ export default function BoardArea({
     <PlayerBar name={selfName} rating={selfRating} initial={selfName.charAt(0)} color="#d4a843" isActive={isWhiteTurn} clockSeconds={selfClock} />
   );
 
+  const prevMoveIndexRef = React.useRef(currentMoveIndex);
+  const isJump = Math.abs(currentMoveIndex - prevMoveIndexRef.current) > 1;
+  React.useEffect(() => {
+    prevMoveIndexRef.current = currentMoveIndex;
+  }, [currentMoveIndex]);
+
   return (
     <div className="board-container" aria-live="polite">
       {/* Top Player */}
@@ -75,6 +81,7 @@ export default function BoardArea({
           boardTheme={boardTheme}
           showArrows={showArrows}
           showCoordinates={showCoordinates}
+          isJump={isJump}
         />
       </div>
 

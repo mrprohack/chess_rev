@@ -709,10 +709,14 @@ body {
   position: absolute;
   width: 12.5%;
   height: 12.5%;
-  transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease-out, left 0.45s cubic-bezier(0.4, 0, 0.2, 1), top 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 1.5s ease-out, left 1.5s cubic-bezier(0.4, 0, 0.2, 1), top 1.5s cubic-bezier(0.4, 0, 0.2, 1);
   padding: 0.625%;
   filter: drop-shadow(0 3px 4px rgba(0,0,0,0.4));
   z-index: 5;
+}
+
+.chess-piece.no-transition {
+  transition: none !important;
 }
 
 @keyframes capture {
@@ -772,7 +776,7 @@ body {
   }
   .board-wrapper {
     gap: 8px;
-    width: min(calc(100vw - 24px), 520px);
+    width: 100%;
   }
   .eval-bar-container {
     width: 18px;
@@ -783,6 +787,19 @@ body {
     min-width: 0;
     height: min(64vh, 580px);
     min-height: 430px;
+    margin-bottom: 110px; /* Space for fixed footer */
+  }
+  .panel-footer {
+    position: fixed;
+    bottom: calc(64px + env(safe-area-inset-bottom));
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--glass-border);
+    padding: 12px 14px;
+    box-shadow: 0 -8px 24px rgba(0,0,0,0.3);
+    border-radius: 16px 16px 0 0;
   }
   .sidebar {
     position: fixed;
@@ -823,7 +840,7 @@ body {
     gap: 12px;
   }
   .board-wrapper {
-    width: calc(100vw - 16px);
+    width: 100%;
     gap: 6px;
   }
   .eval-bar-container {
