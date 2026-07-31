@@ -13,10 +13,13 @@ import urllib.request
 import zipfile
 import tarfile
 import stat
+import logging
 from urllib.parse import urlparse
 from database import SessionLocal, GameRecord
 
 app = FastAPI()
+logger = logging.getLogger(__name__)
+CACHE_VERSION = 2
 
 def ensure_stockfish():
     is_windows = platform.system() == "Windows"
@@ -286,101 +289,147 @@ def parse_pgn(pgn_str: str, engine_depth: int = 10, engine_id: str = "stockfish1
         }
     }
 
+
+def build_cache_key(req: AnalyzeRequest) -> str:
+    return ":".join(
+        map(
+            str,
+            (
+                CACHE_VERSION,
+                req.depth,
+                req.engine,
+                req.maxTime,
+                req.numLines,
+                req.threads,
+            ),
+        )
+    )
+
+
+def fetch_lichess_pgn(session: requests.Session, game_id: str) -> str:
+    response = session.get(
+        f"https://lichess.org/game/export/{game_id}",
+        headers={"Accept": "application/x-chess-pgn"},
+        timeout=10,
+    )
+    if response.status_code == 404:
+        raise HTTPException(status_code=404, detail="Game not found on Lichess")
+    response.raise_for_status()
+    return response.text
+
+
+def fetch_chess_com_pgn(session: requests.Session, game_id: str) -> str:
+    response = session.get(
+        f"https://www.chess.com/callback/live/game/{game_id}",
+        headers=HEADERS,
+        timeout=10,
+    )
+    if response.status_code == 404:
+        raise HTTPException(status_code=404, detail="Game not found on Chess.com")
+    response.raise_for_status()
+    callback = response.json()
+
+    game = callback.get("game", {})
+    uuid = game.get("uuid")
+    end_time = game.get("endTime")
+    if not uuid or not end_time:
+        raise HTTPException(
+            status_code=404,
+            detail="Could not parse game details from Chess.com",
+        )
+
+    players = callback.get("players", {})
+    username = (
+        players.get("top", {}).get("username")
+        or players.get("bottom", {}).get("username")
+    )
+    if not username:
+        raise HTTPException(
+            status_code=404,
+            detail="Could not find players in Chess.com game data",
+        )
+
+    played_at = datetime.datetime.fromtimestamp(end_time, tz=datetime.timezone.utc)
+    archive = session.get(
+        f"https://api.chess.com/pub/player/{username}/games/{played_at.year}/{played_at.month:02d}",
+        headers=HEADERS,
+        timeout=10,
+    )
+    archive.raise_for_status()
+    for game in archive.json().get("games", []):
+        if game.get("uuid") == uuid or str(game.get("url", "")).endswith(game_id):
+            if game.get("pgn"):
+                return game["pgn"]
+
+    raise HTTPException(
+        status_code=404,
+        detail="Game PGN not found in Chess.com archive",
+    )
+
+
 @app.post("/api/analyze")
-async def analyze_game(req: AnalyzeRequest):
-    url = req.url
-    engine_depth = req.depth or 10
-    
-    if "chess.com" not in url and "lichess.org" not in url:
-        raise HTTPException(status_code=400, detail="Invalid URL. Must be chess.com or lichess.org")
-        
-    db = SessionLocal()
+def analyze_game(req: AnalyzeRequest):
+    provider, game_id = parse_game_url(req.url)
+    db = None
     try:
+        db = SessionLocal()
         db_game = db.query(GameRecord).filter(
-            GameRecord.url == url, 
-            GameRecord.depth == str(engine_depth)
+            GameRecord.url == req.url,
+            GameRecord.depth == build_cache_key(req),
         ).first()
         if db_game:
             return db_game.data
-            
-        if "lichess.org" in url:
-            parts = url.split("lichess.org/")
-            game_id = parts[1].split("/")[0].split("#")[0].split("?")[0] if len(parts) > 1 else ""
-            if not game_id:
-                raise HTTPException(status_code=400, detail="Could not extract Lichess game ID")
-                
-            res = requests.get(f"https://lichess.org/game/export/{game_id}", headers={"Accept": "application/x-chess-pgn"}, timeout=10)
-            if res.status_code == 404:
-                raise HTTPException(status_code=404, detail="Game not found on Lichess")
-            res.raise_for_status()
-            
-            game_data = parse_pgn(res.text, engine_depth, req.engine, req.maxTime, req.numLines, req.threads)
-            if not game_data:
-                raise HTTPException(status_code=422, detail="Failed to parse PGN data from Lichess")
-                
-            db.add(GameRecord(url=url, depth=str(engine_depth), data=game_data))
-            db.commit()
-            return game_data
-            
-        elif "chess.com" in url:
-            if "/live/" in url:
-                game_id = url.split("/live/")[1].split("/")[0].split("?")[0]
-            elif "/game/" in url:
-                game_id = url.split("/game/")[1].split("/")[0].split("?")[0]
+
+        with requests.Session() as session:
+            if provider == "lichess":
+                pgn = fetch_lichess_pgn(session, game_id)
             else:
-                raise HTTPException(status_code=400, detail="Could not extract Chess.com game ID")
-                
-            cb_res = requests.get(f"https://www.chess.com/callback/live/game/{game_id}", headers=HEADERS, timeout=10)
-            if cb_res.status_code == 404:
-                raise HTTPException(status_code=404, detail="Game not found on Chess.com")
-            cb_res.raise_for_status()
-            cb_data = cb_res.json()
-            
-            uuid = cb_data.get('game', {}).get('uuid')
-            end_time = cb_data.get('game', {}).get('endTime')
-            if not uuid or not end_time:
-                raise HTTPException(status_code=404, detail="Could not parse game details from Chess.com")
-                
-            dt = datetime.datetime.fromtimestamp(end_time, tz=datetime.timezone.utc)
-            players = cb_data.get('players', {})
-            username = players.get('top', {}).get('username') or players.get('bottom', {}).get('username')
-            if not username:
-                raise HTTPException(status_code=404, detail="Could not find players in Chess.com game data")
-                
-            archive_url = f"https://api.chess.com/pub/player/{username}/games/{dt.year}/{dt.month:02d}"
-            arch_res = requests.get(archive_url, headers=HEADERS, timeout=10)
-            arch_res.raise_for_status()
-            games = arch_res.json().get("games", [])
-            
-            pgn_str = None
-            for g in games:
-                if g.get('uuid') == uuid or str(g.get('url', '')).endswith(str(game_id)):
-                    pgn_str = g.get('pgn')
-                    break
-                    
-            if not pgn_str:
-                raise HTTPException(status_code=404, detail="Game PGN not found in Chess.com archive")
-                
-            game_data = parse_pgn(pgn_str, engine_depth, req.engine, req.maxTime, req.numLines, req.threads)
-            if not game_data:
-                raise HTTPException(status_code=422, detail="Failed to parse PGN data from Chess.com")
-                
-            db.add(GameRecord(url=url, depth=str(engine_depth), data=game_data))
-            db.commit()
-            return game_data
-        
+                pgn = fetch_chess_com_pgn(session, game_id)
+
+        game_data = parse_pgn(
+            pgn,
+            req.depth,
+            req.engine,
+            req.maxTime,
+            req.numLines,
+            req.threads,
+        )
+        if not game_data:
+            raise HTTPException(status_code=422, detail="Could not parse game PGN")
+
+        db.add(
+            GameRecord(
+                url=req.url,
+                depth=build_cache_key(req),
+                data=game_data,
+            )
+        )
+        db.commit()
+        return game_data
     except HTTPException:
         raise
-    except requests.HTTPError as e:
-        status = e.response.status_code if e.response is not None else 500
-        raise HTTPException(status_code=status, detail=f"External chess provider HTTP error ({status}): {str(e)}")
-    except requests.RequestException as e:
-        raise HTTPException(status_code=502, detail=f"Failed to connect to chess provider: {str(e)}")
-    except Exception as e:
-        # ponytail: catch unexpected processing errors to prevent server crash
-        raise HTTPException(status_code=500, detail=f"Error processing game: {str(e)}")
+    except requests.Timeout:
+        raise HTTPException(status_code=504, detail="Chess provider timed out") from None
+    except requests.RequestException:
+        raise HTTPException(
+            status_code=502,
+            detail="Could not reach chess provider",
+        ) from None
+    except EngineUnavailableError:
+        raise HTTPException(status_code=503, detail="Chess engine unavailable") from None
+    except ValueError:
+        raise HTTPException(status_code=422, detail="Could not parse game PGN") from None
+    except Exception:
+        if db is not None:
+            try:
+                db.rollback()
+            except Exception:
+                logger.exception("Database rollback failed")
+        logger.exception("Unexpected game analysis failure")
+        raise HTTPException(status_code=500, detail="Could not process game") from None
     finally:
-        db.close()
+        if db is not None:
+            db.close()
 
 if __name__ == "__main__":
     import uvicorn

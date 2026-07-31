@@ -1,7 +1,9 @@
 import unittest
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
 
 import chess
+import requests
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 import main
@@ -101,6 +103,58 @@ class TestPgnAnalysis(unittest.TestCase):
         self.assertTrue(engine.closed)
 
 
+class TestCacheKey(unittest.TestCase):
+    def test_changes_for_every_analysis_setting(self):
+        build_cache_key = getattr(main, "build_cache_key", None)
+        self.assertIsNotNone(build_cache_key)
+        base = main.AnalyzeRequest(url="https://lichess.org/abcdefgh")
+        base_key = build_cache_key(base)
+        variants = [
+            main.AnalyzeRequest(url=base.url, depth=11),
+            main.AnalyzeRequest(url=base.url, engine="off"),
+            main.AnalyzeRequest(url=base.url, maxTime=3),
+            main.AnalyzeRequest(url=base.url, numLines=2),
+            main.AnalyzeRequest(url=base.url, threads=2),
+        ]
+        self.assertTrue(all(build_cache_key(item) != base_key for item in variants))
+
+
+class TestProviderFetching(unittest.TestCase):
+    def test_lichess_not_found_has_provider_specific_error(self):
+        fetch = getattr(main, "fetch_lichess_pgn", None)
+        self.assertIsNotNone(fetch)
+        session = MagicMock()
+        session.get.return_value.status_code = 404
+
+        with self.assertRaises(HTTPException) as caught:
+            fetch(session, "missing1")
+
+        self.assertEqual(caught.exception.status_code, 404)
+        self.assertEqual(caught.exception.detail, "Game not found on Lichess")
+
+    def test_chess_com_finds_pgn_in_monthly_archive(self):
+        fetch = getattr(main, "fetch_chess_com_pgn", None)
+        self.assertIsNotNone(fetch)
+        callback = MagicMock()
+        callback.status_code = 200
+        callback.json.return_value = {
+            "game": {"uuid": "game-uuid", "endTime": 1735689600},
+            "players": {"top": {"username": "Alice"}},
+        }
+        archive = MagicMock()
+        archive.status_code = 200
+        archive.json.return_value = {
+            "games": [{"uuid": "game-uuid", "pgn": "[Result \"*\"]\n\n*"}]
+        }
+        session = MagicMock()
+        session.get.side_effect = [callback, archive]
+
+        self.assertEqual(
+            fetch(session, "123"),
+            "[Result \"*\"]\n\n*",
+        )
+
+
 class TestBackendApi(unittest.TestCase):
     def test_root_endpoint(self):
         r = client.get("/")
@@ -113,9 +167,92 @@ class TestBackendApi(unittest.TestCase):
         self.assertIn("Must be chess.com or lichess.org", r.json().get("detail", ""))
 
     def test_nonexistent_lichess_game(self):
-        r = client.post("/api/analyze", json={"url": "https://lichess.org/nonexistent99999"})
-        self.assertEqual(r.status_code, 404)
-        self.assertEqual(r.json().get("detail"), "Game not found on Lichess")
+        database = MagicMock()
+        database.query.return_value.filter.return_value.first.return_value = None
+        not_found = HTTPException(status_code=404, detail="Game not found on Lichess")
+        provider_response = MagicMock(status_code=404)
+        with patch("main.SessionLocal", return_value=database):
+            with patch("main.requests.get", return_value=provider_response):
+                with patch(
+                    "main.fetch_lichess_pgn",
+                    create=True,
+                    side_effect=not_found,
+                ):
+                    response = client.post(
+                        "/api/analyze",
+                        json={"url": "https://lichess.org/nonexistent99999"},
+                    )
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json().get("detail"), "Game not found on Lichess")
+
+    def test_provider_timeout_returns_safe_504(self):
+        database = MagicMock()
+        database.query.return_value.filter.return_value.first.return_value = None
+        timeout = requests.Timeout("secret provider detail")
+        with patch("main.SessionLocal", return_value=database):
+            with patch("main.requests.get", side_effect=timeout):
+                with patch("main.requests.Session") as session_factory:
+                    session_factory.return_value.__enter__.return_value.get.side_effect = timeout
+                    response = client.post(
+                        "/api/analyze",
+                        json={"url": "https://lichess.org/timeoutcase1"},
+                    )
+        self.assertEqual(response.status_code, 504)
+        self.assertNotIn("secret", response.json()["detail"])
+
+    def test_engine_failure_returns_safe_503(self):
+        database = MagicMock()
+        database.query.return_value.filter.return_value.first.return_value = None
+        provider_response = MagicMock()
+        provider_response.status_code = 200
+        provider_response.text = "[Result \"*\"]\n\n*"
+        with patch("main.SessionLocal", return_value=database):
+            with patch("main.requests.get", return_value=provider_response):
+                with patch("main.requests.Session") as session_factory:
+                    session_factory.return_value.__enter__.return_value.get.return_value = provider_response
+                    with patch(
+                        "main.parse_pgn",
+                        side_effect=main.EngineUnavailableError("C:\\secret\\stockfish.exe"),
+                    ):
+                        response = client.post(
+                            "/api/analyze",
+                            json={"url": "https://lichess.org/enginefail1"},
+                        )
+        self.assertEqual(response.status_code, 503)
+        self.assertNotIn("secret", response.json()["detail"])
+
+    def test_cached_response_skips_provider_fetch(self):
+        cached = {"white": "Cached", "moves": []}
+        database = MagicMock()
+        database.query.return_value.filter.return_value.first.return_value = (
+            SimpleNamespace(data=cached)
+        )
+        with patch("main.SessionLocal", return_value=database):
+            with patch(
+                "main.requests.get",
+                side_effect=AssertionError("provider should not be called"),
+            ):
+                response = client.post(
+                    "/api/analyze",
+                    json={"url": "https://lichess.org/cachedcase1"},
+                )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), cached)
+
+    def test_database_startup_failure_returns_safe_500(self):
+        safe_client = TestClient(main.app, raise_server_exceptions=False)
+        with patch(
+            "main.SessionLocal",
+            side_effect=RuntimeError("secret database detail"),
+        ):
+            with self.assertLogs(main.logger, level="ERROR"):
+                response = safe_client.post(
+                    "/api/analyze",
+                    json={"url": "https://lichess.org/databasefail1"},
+                )
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.headers["content-type"], "application/json")
+        self.assertEqual(response.json()["detail"], "Could not process game")
 
 if __name__ == "__main__":
     unittest.main()
