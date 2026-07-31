@@ -1,77 +1,125 @@
-# Chess Game Review Clone — Workspace Guide
+# Chess Game Review Clone — Agent Guide
 
-## Project Overview
+## Purpose
 
-A full-stack Chess.com / Lichess game review app. Users paste a game URL, and the app fetches, analyzes with Stockfish, and replays the game move-by-move in a dark-mode UI inspired by Chess.com.
+This is a full-stack Chess.com and Lichess game-review app. A user submits a game URL; the FastAPI backend fetches its PGN, analyzes it with Stockfish, caches the result in SQLite, and the React frontend replays the annotated game.
 
-## Directory Layout
+Keep this file accurate. Whenever a change affects architecture, commands, API contracts, persistence, deployment, or the development workflow, update this guide in the same change.
+
+## Start-of-Task Checklist
+
+1. Read this file, then inspect the files that own the requested behavior.
+2. Check `git status --short`; preserve unrelated user changes.
+3. Trace frontend callers before changing the API or response fields.
+4. Use the project's backend virtual environment, never the system Python.
+5. Add or update focused tests before changing backend behavior.
+6. Run the smallest relevant verification first, then the full relevant suite.
+
+## Project Map
 
 ```
-backend/                 Python FastAPI backend
-  main.py                Single API file: /api/analyze endpoint, PGN parsing, Stockfish engine integration
-  database.py            SQLAlchemy models + SQLite session (games.db)
-  stockfish/             Stockfish 18 binary (stockfish-windows-x86-64-avx2.exe)
-  venv/                  Python virtual environment (gitignored)
-frontend/                React + Vite frontend
-  src/
-    App.jsx              Root layout: Sidebar + BoardArea + RightPanel + SettingsModal
-    components/
-      BoardArea.jsx      Player bars, eval bar, wraps ChessBoard
-      ChessBoard.jsx     Custom FEN parser + SVG piece renderer with animation support
-      RightPanel.jsx     URL input, move list, navigation controls, classification stats
-      Sidebar.jsx        Left icon nav (decorative)
-      SettingsModal.jsx  Theme toggle (dark/light/system), engine depth slider
-  public/pieces_alt/     SVG chess pieces (wP.svg, bK.svg, etc.) — the active piece set
-  public/pieces/         Alternate/older piece set (not currently used)
+backend/
+  main.py                FastAPI API, URL parsing, provider fetches, PGN analysis, Stockfish lifecycle
+  database.py            SQLAlchemy SQLite model and session
+  test_main.py           Backend unittest suite; providers and engine are mocked
+  requirements.txt       Backend dependencies
+  stockfish/             Downloaded Stockfish binary (gitignored)
+  venv/                  Required local virtual environment (gitignored)
+
+frontend/
+  src/App.jsx            Application state and layout composition
+  src/components/        Board, right panel, sidebar, and settings UI
+  public/pieces_alt/     Active SVG piece set
+  package.json           Vite commands
+
+run_all.ps1              Starts backend and frontend in separate Windows terminals
+run_all.bat              CMD equivalent
 ```
 
-## Running the Project
+## Running Locally
 
-- **Backend:** `cd backend && venv\Scripts\python.exe main.py` — runs on `http://127.0.0.1:8000`
-- **Frontend:** `cd frontend && npm run dev` — runs on `http://127.0.0.1:5173`
-- **Both at once:** `run_all.bat` (CMD) or `run_all.ps1` (PowerShell) — prints both URLs
-- **Backend uses the venv Python** at `backend/venv/Scripts/python.exe`, not the system Python
+Use these URLs unless the launch configuration changes:
 
-## Build & Lint Commands
+- Backend: `http://127.0.0.1:8001`
+- Frontend: `http://127.0.0.1:8000`
 
-| Command                | Description              |
-|------------------------|--------------------------|
-| `npm run dev`          | Vite dev server (frontend)|
-| `npm run build`        | Production build (frontend) |
-| `npm run lint`         | oxlint linter (frontend)  |
-| `npm run preview`      | Preview production build  |
+```powershell
+# Backend
+Set-Location backend
+.\venv\Scripts\python.exe main.py
 
-No test framework is configured. Backend has `test_network.py` and `test_scraper.py` (standalone scripts, not a test suite).
+# Frontend, in another terminal
+Set-Location frontend
+npm run dev
 
-## Architecture
+# Or start both
+.\run_all.ps1
+```
 
-- **Frontend ↔ Backend:** Single REST endpoint `POST /api/analyze`. Body: `{ url, depth? }`. Response includes moves array, player info, accuracy stats, classification counts. No auth, no WebSocket.
-- **Backend fetch flow:** Chess.com callback API → monthly PGN archive → parse with `python-chess` → Stockfish evaluation per move → SQLite cache.
-- **Lichess support:** Direct PGN export from `lichess.org/game/export/{id}`.
-- **Stockfish engine:** Binary at `backend/stockfish/stockfish/stockfish-windows-x86-64-avx2.exe`. Opened via `chess.engine.SimpleEngine.popen_uci()`. Windows-specific path.
-- **Database:** SQLite at `backend/games.db`. Keyed on (url, depth). No migrations — uses `Base.metadata.create_all()`.
+When starting services, print both local URLs. The backend binds to `0.0.0.0:8001`; Vite runs on `0.0.0.0:8000`.
 
-## Key Conventions
+## Backend Contract and Data Flow
 
-- **CSS:** All vanilla CSS in `App.css`, `index.css`, `SettingsModal.css`. Uses CSS custom properties (`--bg-secondary`, `--board-light`, `--board-dark`, etc.). Theme switching sets `data-theme` attribute on `<html>`.
-- **State management:** Lifted to `App.jsx` — `gameData`, `currentMoveIndex`, `theme`, `engineDepth` passed as props. No Redux/Context/Zustand.
-- **Chess piece rendering:** `ChessBoard.jsx` uses a custom piece syncing algorithm for smooth animations (tracks `moved`, `captured`, `promoted` statuses). Pieces are `<img>` tags loading from `/pieces_alt/{type}.svg`.
-- **Move classification:** Backend classifies each move (Best/Excellent/Good/Inaccuracy/Mistake/Blunder/Brilliant/Great/Miss/Book) using centipawn loss thresholds. First 5 "good" moves are reclassified as "Book".
-- **Arrows overlay:** SVG arrows on the board — green for best move, red for played move (shown when the move is a mistake/blunder/miss).
+`POST /api/analyze` accepts:
 
-## Gotchas
+```json
+{
+  "url": "https://lichess.org/example",
+  "depth": 10,
+  "engine": "stockfish18",
+  "maxTime": 5,
+  "numLines": 3,
+  "threads": 1
+}
+```
 
-- **Backend binds to `127.0.0.1`**, not `0.0.0.0`. Frontend hardcodes `http://127.0.0.1:8000` for API calls. No environment variable for the API URL.
-- **Stockfish binary is Windows-only** (`stockfish-windows-x86-64-avx2.exe`). Cross-platform support would need a different binary path.
-- **Chess.com API rate-limits** occasionally. Games are cached in SQLite keyed by URL+depth to mitigate this.
-- **`stockfish/` directory is gitignored** — the Stockfish binary must be present locally but isn't in the repo. The `.zip` is also gitignored.
-- **No TypeScript** — the frontend is plain JSX with no type checking configured.
-- **Vite dev server binds to `127.0.0.1`** via `--host` flag in package.json, not the default `localhost` (important for IPv6 resolution issues on some systems).
+- Validate request bounds at the Pydantic boundary.
+- Parse provider URLs with `parse_game_url`; do not reintroduce substring-only provider checks.
+- Lichess fetches a direct PGN export. Chess.com fetches callback metadata, then the monthly archive.
+- Keep provider HTTP, timeout, engine, and internal failures mapped to stable FastAPI `detail` messages; do not expose raw exceptions to clients.
+- `parse_pgn` owns the Stockfish process and must always close it. Reuse the post-move evaluation as the next pre-move evaluation; do not restore duplicate engine analysis.
+- Successful response fields are consumed by the frontend. Preserve top-level player/result/accuracy/count fields and each move's `number`, `color`, `notation`, `classification`, `fen`, `time`, `eval`, `clock`, `played_move`, and `best_move` fields unless frontend changes ship with the backend change.
 
-## Customization Rules
+## Persistence and Caching
 
-- When running the backend and frontend services, always print their local URLs to the console.
-- Backend URL is typically `http://127.0.0.1:8000`
-- Frontend URL is typically `http://127.0.0.1:5173`
-- Always ask for explicit user confirmation before executing any `git push` command.
+- SQLite database: `backend/games.db`.
+- `GameRecord` uses `(url, depth)` as its composite key. The `depth` column holds the versioned analysis cache key, not just the numeric depth.
+- Cache keys must include every setting that changes analysis output: cache version, depth, engine, maximum time, number of lines, and threads.
+- Existing cache rows can be ignored when the cache-key format changes; do not add a migration unless the model actually requires one.
+- Commit only fully analyzed results. Roll back a failed database write and close every session.
 
+## Frontend Conventions
+
+- Plain React JSX; no TypeScript or client state library.
+- Keep application state lifted in `frontend/src/App.jsx`.
+- Use existing CSS custom properties and theme handling instead of adding a styling framework.
+- `ChessBoard.jsx` uses custom FEN parsing and image-based pieces from `/pieces_alt/`; preserve its piece-sync animation behavior when changing board state.
+- The settings panel sends all engine options listed in the backend contract. Keep frontend and backend validation aligned.
+
+## Verification
+
+Run from the repository root unless noted otherwise:
+
+```powershell
+# Backend: no live provider or Stockfish dependency in the test suite
+backend\venv\Scripts\python.exe -m unittest discover -s backend -p "test_main.py" -v
+backend\venv\Scripts\python.exe -m compileall -q backend
+
+# Frontend
+Set-Location frontend
+npm run lint
+npm run build
+```
+
+`test_network.py` and `test_scraper.py` are exploratory scripts, not the regression suite. Mock provider calls and Stockfish in `test_main.py`; never make unit tests depend on a live game URL.
+
+## Working Rules
+
+- Prefer the smallest change that fixes the shared root cause; do not add dependencies or abstractions without a demonstrated need.
+- Preserve request and response compatibility unless the task explicitly includes coordinated frontend work.
+- Keep `main.py` organized around named helpers rather than duplicating provider, caching, or engine logic inside the route.
+- Stockfish downloads on first startup and its binary directory is gitignored. Do not commit binaries or archives.
+- Chess.com may rate-limit requests. Respect the cache and avoid automatic retry loops unless specifically requested.
+- Never use destructive Git commands without explicit user approval.
+- Always ask for explicit user confirmation before `git push`.
+- Before claiming a change is complete, run fresh verification and report the actual command result.
