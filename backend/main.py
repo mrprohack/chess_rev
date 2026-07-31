@@ -110,6 +110,43 @@ def parse_game_url(raw_url: str) -> tuple[str, str]:
 async def root():
     return {"message": "Chess API is running. Please open the Frontend Web UI at http://127.0.0.1:8000"}
 
+
+class EngineUnavailableError(RuntimeError):
+    pass
+
+
+def open_engine(engine_path, engine_id, threads):
+    engine = None
+    try:
+        engine = chess.engine.SimpleEngine.popen_uci(engine_path)
+        engine.configure({"Threads": threads})
+        if "lite" in engine_id.lower():
+            engine.configure({"Use NNUE": False})
+        return engine
+    except Exception as exc:
+        if engine:
+            engine.quit()
+        raise EngineUnavailableError("Chess engine unavailable") from exc
+
+
+def analyse_position(engine, board, limit):
+    try:
+        return engine.analyse(board, limit)
+    except (chess.engine.EngineError, OSError, TimeoutError) as exc:
+        raise EngineUnavailableError("Chess engine unavailable") from exc
+
+
+def score_from_info(info):
+    if not info:
+        return 0
+    return info["score"].white().score(mate_score=10000) or 0
+
+
+def best_move_from_info(info):
+    pv = info.get("pv", []) if info else []
+    return pv[0].uci() if pv else None
+
+
 def parse_pgn(pgn_str: str, engine_depth: int = 10, engine_id: str = "stockfish18", max_time: int = 5, num_lines: int = 3, threads: int = 1):
     pgn_io = io.StringIO(pgn_str)
     game = chess.pgn.read_game(pgn_io)
@@ -130,19 +167,7 @@ def parse_pgn(pgn_str: str, engine_depth: int = 10, engine_id: str = "stockfish1
     binary_name = "stockfish-windows-x86-64-avx2.exe" if is_windows else "stockfish-ubuntu-x86-64-avx2"
     engine_path = os.path.join(os.path.dirname(__file__), "stockfish", "stockfish", binary_name)
     # ponytail: skipped config file abstraction, simple OS check is enough
-    try:
-        if engine_id == "off":
-            engine = None
-        else:
-            engine = chess.engine.SimpleEngine.popen_uci(engine_path)
-            # Apply user configs
-            engine.configure({"Threads": max(1, threads), "MultiPV": max(1, num_lines)})
-            if "lite" in engine_id.lower():
-                # "Lite" uses classical evaluation instead of heavy NNUE
-                engine.configure({"Use NNUE": False})
-    except Exception as e:
-        print(f"Engine error: {e}")
-        engine = None
+    engine = None if engine_id == "off" else open_engine(engine_path, engine_id, threads)
     
     base = 60
     inc = 0
@@ -154,17 +179,16 @@ def parse_pgn(pgn_str: str, engine_depth: int = 10, engine_id: str = "stockfish1
     elif tc.isdigit():
         base = int(tc)
         
+    limit = chess.engine.Limit(
+        depth=engine_depth,
+        time=max_time if max_time > 0 else None,
+    )
+
     try:
+        current_info = analyse_position(engine, board, limit) if engine else None
         while node.variations:
-            score_before = 0
-            best_move_uci = None
-            if engine:
-                time_limit = max_time if max_time > 0 else None
-                limit = chess.engine.Limit(depth=engine_depth, time=time_limit)
-                info = engine.analyse(board, limit)
-                score_before = info["score"].white().score(mate_score=10000)
-                if "pv" in info and len(info["pv"]) > 0:
-                    best_move_uci = info["pv"][0].uci()
+            score_before = score_from_info(current_info)
+            best_move_uci = best_move_from_info(current_info)
                 
             next_node = node.variation(0)
             move = next_node.move
@@ -172,12 +196,8 @@ def parse_pgn(pgn_str: str, engine_depth: int = 10, engine_id: str = "stockfish1
             played_move_uci = move.uci()
             board.push(move)
             
-            score_after = 0
-            if engine:
-                time_limit = max_time if max_time > 0 else None
-                limit = chess.engine.Limit(depth=engine_depth, time=time_limit)
-                info = engine.analyse(board, limit)
-                score_after = info["score"].white().score(mate_score=10000)
+            next_info = analyse_position(engine, board, limit) if engine else None
+            score_after = score_from_info(next_info)
                 
             color = "white" if board.turn == chess.BLACK else "black"
             if color == "white":
@@ -244,6 +264,7 @@ def parse_pgn(pgn_str: str, engine_depth: int = 10, engine_id: str = "stockfish1
             if color == "black":
                 move_num += 1
                 
+            current_info = next_info
             node = next_node
     finally:
         # ponytail: ensure stockfish engine process is closed even if an exception occurs during move parsing

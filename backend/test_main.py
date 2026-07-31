@@ -1,4 +1,7 @@
 import unittest
+from unittest.mock import patch
+
+import chess
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 import main
@@ -49,6 +52,53 @@ class TestGameUrlParsing(unittest.TestCase):
         with self.assertRaises(HTTPException) as caught:
             self.parse("https://www.chess.com/game/live/")
         self.assertEqual(caught.exception.status_code, 400)
+
+
+class FakeEngine:
+    def __init__(self, fail_after=None):
+        self.analysis_count = 0
+        self.fail_after = fail_after
+        self.closed = False
+
+    def configure(self, options):
+        return None
+
+    def analyse(self, board, limit):
+        self.analysis_count += 1
+        if self.fail_after is not None and self.analysis_count > self.fail_after:
+            raise chess.engine.EngineError("engine stopped")
+        return {
+            "score": chess.engine.PovScore(chess.engine.Cp(0), chess.WHITE),
+            "pv": [next(iter(board.legal_moves))],
+        }
+
+    def quit(self):
+        self.closed = True
+
+
+class TestPgnAnalysis(unittest.TestCase):
+    short_pgn = """[White "Alice"]
+[Black "Bob"]
+[Result "*"]
+
+1. e4 e5 *
+"""
+
+    def test_analyzes_each_position_once(self):
+        engine = FakeEngine()
+        with patch("main.chess.engine.SimpleEngine.popen_uci", return_value=engine):
+            result = main.parse_pgn(self.short_pgn)
+        self.assertEqual(len(result["moves"]), 2)
+        self.assertEqual(engine.analysis_count, 3)
+        self.assertTrue(engine.closed)
+
+    def test_closes_engine_when_analysis_fails(self):
+        engine = FakeEngine(fail_after=1)
+        with patch("main.chess.engine.SimpleEngine.popen_uci", return_value=engine):
+            with self.assertRaises(Exception) as caught:
+                main.parse_pgn(self.short_pgn)
+        self.assertEqual(type(caught.exception).__name__, "EngineUnavailableError")
+        self.assertTrue(engine.closed)
 
 
 class TestBackendApi(unittest.TestCase):
