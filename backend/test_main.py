@@ -91,6 +91,35 @@ class TestPgnAnalysis(unittest.TestCase):
         with patch("main.chess.engine.SimpleEngine.popen_uci", return_value=engine):
             result = main.parse_pgn(self.short_pgn)
         self.assertEqual(len(result["moves"]), 2)
+        self.assertEqual(
+            set(result),
+            {
+                "white",
+                "white_rating",
+                "black",
+                "black_rating",
+                "result",
+                "base_time",
+                "moves",
+                "counts",
+                "accuracy",
+            },
+        )
+        self.assertEqual(
+            set(result["moves"][0]),
+            {
+                "number",
+                "color",
+                "notation",
+                "classification",
+                "fen",
+                "time",
+                "eval",
+                "clock",
+                "played_move",
+                "best_move",
+            },
+        )
         self.assertEqual(engine.analysis_count, 3)
         self.assertTrue(engine.closed)
 
