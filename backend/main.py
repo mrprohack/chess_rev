@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import requests
 import chess.pgn
 import chess.engine
@@ -13,7 +13,7 @@ import urllib.request
 import zipfile
 import tarfile
 import stat
-from typing import Optional
+from urllib.parse import urlparse
 from database import SessionLocal, GameRecord
 
 app = FastAPI()
@@ -72,12 +72,39 @@ app.add_middleware(
 HEADERS = {"User-Agent": "ChessPgnReviewApp/1.0 (https://github.com/chesspgn)"}
 
 class AnalyzeRequest(BaseModel):
-    url: str
-    depth: Optional[int] = 10
-    engine: Optional[str] = "stockfish18"
-    maxTime: Optional[int] = 5
-    numLines: Optional[int] = 3
-    threads: Optional[int] = 1
+    url: str = Field(min_length=1, max_length=2048)
+    depth: int = Field(default=10, ge=1, le=30)
+    engine: str = Field(default="stockfish18", min_length=1, max_length=32)
+    maxTime: int = Field(default=5, ge=0, le=60)
+    numLines: int = Field(default=3, ge=1, le=5)
+    threads: int = Field(default=1, ge=1, le=32)
+
+
+def parse_game_url(raw_url: str) -> tuple[str, str]:
+    parsed = urlparse(raw_url.strip())
+    host = (parsed.hostname or "").lower()
+    parts = [part for part in parsed.path.split("/") if part]
+
+    if parsed.scheme not in {"http", "https"}:
+        raise HTTPException(status_code=400, detail="Invalid game URL")
+
+    if host == "lichess.org" or host.endswith(".lichess.org"):
+        if not parts:
+            raise HTTPException(status_code=400, detail="Could not extract Lichess game ID")
+        return "lichess", parts[0]
+
+    if host == "chess.com" or host.endswith(".chess.com"):
+        for game_type in ("live", "daily"):
+            if game_type in parts:
+                index = parts.index(game_type) + 1
+                if index < len(parts):
+                    return "chess.com", parts[index]
+        raise HTTPException(status_code=400, detail="Could not extract Chess.com game ID")
+
+    raise HTTPException(
+        status_code=400,
+        detail="Invalid URL. Must be chess.com or lichess.org",
+    )
 
 @app.get("/")
 async def root():
