@@ -19,4 +19,5 @@ graphify-out/
 .opencode/
 games.db
 temp_test/
+.worktrees/
 
