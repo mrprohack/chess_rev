@@ -51,5 +51,5 @@ jobs:
       - name: Check syntax
         run: python -m py_compile *.py
 
-      - name: Run tests
-        run: python -m unittest discover -p "test_*.py" -v
+      - name: Run regression tests
+        run: python -m unittest test_main.py test_chesscom_profile.py -v
