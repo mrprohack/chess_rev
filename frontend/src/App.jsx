@@ -62,6 +62,7 @@ function App() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState('');
 
+  // Settings state with localStorage persistence
   const [theme, setTheme] = useState(() => localStorage.getItem('chess_theme') || 'dark');
   const [engineDepth, setEngineDepth] = useState(() => Number(localStorage.getItem('chess_engineDepth')) || 10);
   const [boardTheme, setBoardTheme] = useState(() => localStorage.getItem('chess_boardTheme') || 'wood');
@@ -72,6 +73,8 @@ function App() {
   const [soundTheme, setSoundTheme] = useState(() => localStorage.getItem('chess_soundTheme') || 'classic');
   const [autoPlaySpeed, setAutoPlaySpeed] = useState(() => Number(localStorage.getItem('chess_autoPlaySpeed')) || 1000);
   const [figurineNotation, setFigurineNotation] = useState(() => localStorage.getItem('chess_figurineNotation') !== 'false');
+
+  // Analysis Engine Settings
   const [chessEngine, setChessEngine] = useState(() => localStorage.getItem('chess_engineSelect') || 'stockfish18');
   const [maxTime, setMaxTime] = useState(() => Number(localStorage.getItem('chess_maxTime')) || 5);
   const [numLines, setNumLines] = useState(() => Number(localStorage.getItem('chess_numLines')) || 3);
@@ -121,6 +124,7 @@ function App() {
     };
 
     applyTheme(theme);
+
     if (theme === 'system') {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       const handleChange = () => applyTheme('system');
@@ -148,6 +152,7 @@ function App() {
     const username = defaultChessUsername || profileData?.username || '';
     const perspective = getPlayerPerspective(data, username);
     if (perspective) setIsFlipped(perspective === 'black');
+
     setGameData(data);
     setCurrentGameUrl(sourceUrl || '');
     setCurrentMoveIndex(0);
@@ -163,6 +168,7 @@ function App() {
     });
   };
 
+  // Global keyboard navigation for chess moves and quick bookmarking.
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
@@ -201,7 +207,7 @@ function App() {
           showArrows={showArrows}
           showCoordinates={showCoordinates}
           profileUsername={defaultChessUsername}
-          profileAvatar={profileData?.avatar || ''}
+          profileAvatar={profileData?.avatar || ""}
         />
         <RightPanel
           gameData={gameData}
@@ -223,9 +229,6 @@ function App() {
           threads={threads}
           profileUsername={defaultChessUsername}
           profileData={profileData}
-          profileLoading={profileLoading}
-          profileError={profileError}
-          onLoadProfile={loadChessProfile}
           bookmarks={bookmarks}
           onToggleBookmark={toggleCurrentBookmark}
         />
@@ -261,6 +264,11 @@ function App() {
         setNumLines={setNumLines}
         threads={threads}
         setThreads={setThreads}
+        profileUsername={defaultChessUsername}
+        profileData={profileData}
+        profileLoading={profileLoading}
+        profileError={profileError}
+        onLoadProfile={loadChessProfile}
       />
     </div>
   );
