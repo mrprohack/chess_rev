@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Bookmark, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatMoveLabel, getMoveStory } from '../utils/review';
-import { useReviewMotion } from './ReviewMotionScope';
+import { useReviewMotion } from './reviewMotionContext';
 
 function formatUci(uci) {
   if (!uci || uci.length < 4) return '—';
