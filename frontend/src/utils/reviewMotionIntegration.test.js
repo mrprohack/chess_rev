@@ -12,6 +12,7 @@ const boardAreaPath = path.join(componentsDir, 'BoardArea.jsx');
 const badgePath = path.join(componentsDir, 'BoardVerdictBadge.jsx');
 const landingPath = path.join(componentsDir, 'LandingEffect.jsx');
 const scopePath = path.join(componentsDir, 'ReviewMotionScope.jsx');
+const contextPath = path.join(componentsDir, 'reviewMotionContext.js');
 const moveStoryPath = path.join(componentsDir, 'MoveStory.jsx');
 const appPath = path.join(srcDir, 'App.jsx');
 const cssPath = path.join(srcDir, 'CinematicMotion.css');
@@ -71,19 +72,24 @@ test('cinematic board CSS includes verdict placement, landing effects, and disti
   }
 });
 
-test('review panel descendants share the same motion phase without putting timing logic in RightPanel', () => {
+test('review panel descendants share motion through a fast-refresh-safe context module', () => {
   assert.equal(fs.existsSync(scopePath), true, 'ReviewMotionScope.jsx should exist');
+  assert.equal(fs.existsSync(contextPath), true, 'reviewMotionContext.js should exist');
   const app = read(appPath);
   const scope = read(scopePath);
+  const context = read(contextPath);
   assert.match(app, /ReviewMotionScope/);
   assert.match(app, /reviewMotion=\{reviewMotion\}/);
   assert.match(scope, /data-review-motion-phase/);
   assert.match(scope, /display/);
-  assert.match(scope, /useReviewMotion/);
+  assert.match(scope, /ReviewMotionContext/);
+  assert.doesNotMatch(scope, /export function useReviewMotion/);
+  assert.match(context, /export function useReviewMotion/);
 });
 
 test('MoveStory holds the previous explanation until panelSync and isolates bookmark pulse state', () => {
   const source = read(moveStoryPath);
+  assert.match(source, /reviewMotionContext/);
   assert.match(source, /useReviewMotion/);
   assert.match(source, /panelSync/);
   assert.match(source, /displayState/);
@@ -104,5 +110,5 @@ test('bookmark micro-animation is local to the bookmark icon', () => {
   const css = read(cssPath);
   assert.match(css, /\.bookmark-icon-pulse/);
   assert.match(css, /bookmark-snap/);
-  assert.doesNotMatch(css, /\.motion-board[^\{]*\{[^\}]*bookmark-snap/s);
+  assert.doesNotMatch(css, /\.motion-board[^{]*\{[^}]*bookmark-snap/s);
 });
