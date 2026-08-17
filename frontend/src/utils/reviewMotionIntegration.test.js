@@ -38,7 +38,20 @@ test('BoardArea forwards the shared review motion without replacing deterministi
   assert.match(source, /reviewMotion/);
   assert.match(source, /animationMove/);
   assert.match(source, /animationDirection/);
-  assert.match(source, /reviewMotion=\{reviewMotion\}/);
+  assert.match(source, /reviewMotion=\{boardReviewMotion\}/);
+});
+
+test('BoardArea derives an immediate one-ply pieceMoving phase before App effects can run', () => {
+  const source = read(boardAreaPath);
+  assert.match(source, /boardReviewMotion/);
+  assert.match(source, /Math\.abs\(delta\) === 1/);
+  assert.match(source, /phase:\s*shouldAnimateImmediate\s*\?\s*['"]pieceMoving['"]\s*:\s*['"]settled['"]/);
+  assert.match(source, /reviewMotion\?\.reducedMotion/);
+});
+
+test('App includes reduced-motion state inside the shared review motion payload', () => {
+  const source = read(appPath);
+  assert.match(source, /reducedMotion:\s*prefersReducedMotion/);
 });
 
 test('cinematic board CSS includes verdict placement, landing effects, and distinct verdict motions', () => {
