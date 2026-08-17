@@ -14,18 +14,21 @@ jobs:
         working-directory: frontend
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          
+
       - name: Install dependencies
         run: npm install
-        
+
+      - name: Unit tests
+        run: npm run test:unit
+
       - name: Lint
         run: npm run lint
-        
+
       - name: Build
         run: npm run build
 
@@ -36,18 +39,17 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          
+
       - name: Install backend dependencies
         run: pip install -r requirements.txt
-          
+
       - name: Check syntax
         run: python -m py_compile *.py
-        
-      - name: Run tests
-        run: python -m unittest test_main.py
 
+      - name: Run regression tests
+        run: python -m unittest test_main.py test_chesscom_profile.py -v

@@ -1,31 +1,33 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  SkipBack, 
-  SkipForward, 
-  Settings, 
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  SkipBack,
+  SkipForward,
+  Settings,
   Share2,
   RefreshCw,
   Cpu,
   Loader2,
   Play,
-  Pause
+  Pause,
 } from 'lucide-react';
 
 import { playMoveSound } from '../utils/audio';
+import { isImportantMove } from '../utils/review';
+import MoveStory from './MoveStory';
 
 const CLASS_COLORS = {
   brilliant: 'brilliant', great: 'great', best: 'best', excellent: 'excellent',
-  good: 'good', inaccuracy: 'inaccuracy', mistake: 'mistake', miss: 'miss', blunder: 'blunder', book: 'book'
+  good: 'good', inaccuracy: 'inaccuracy', mistake: 'mistake', miss: 'miss', blunder: 'blunder', book: 'book',
 };
 
 const renderSan = (san, cls, figurineNotation = true) => {
   if (!san) return null;
-  const pieces = { 'N': '♘', 'B': '♗', 'R': '♖', 'Q': '♕', 'K': '♔' };
+  const pieces = { N: '♘', B: '♗', R: '♖', Q: '♕', K: '♔' };
   const firstChar = san.charAt(0);
-  const colorClass = cls ? CLASS_COLORS[cls.toLowerCase()] + "-text" : "";
-  
+  const colorClass = cls ? `${CLASS_COLORS[cls.toLowerCase()] || ''}-text` : '';
+
   if (figurineNotation && pieces[firstChar]) {
     return (
       <span className={colorClass} style={{ display: 'inline-flex', alignItems: 'center' }}>
@@ -39,7 +41,7 @@ const renderSan = (san, cls, figurineNotation = true) => {
 
 const getIcon = (cls) => {
   if (!cls) return '';
-  switch(cls.toLowerCase()) {
+  switch (cls.toLowerCase()) {
     case 'brilliant': return '!!';
     case 'great': return '!';
     case 'best': return '★';
@@ -56,7 +58,7 @@ const getIcon = (cls) => {
 
 export default function RightPanel({
   gameData,
-  setGameData,
+  onGameLoaded,
   currentMoveIndex,
   setCurrentMoveIndex,
   engineDepth,
@@ -71,7 +73,12 @@ export default function RightPanel({
   chessEngine = 'stockfish18',
   maxTime = 5,
   numLines = 3,
-  threads = 1
+  threads = 1,
+  onHideReview,
+  requestedUrl = '',
+  onRequestedUrlConsumed,
+  bookmarks = [],
+  onToggleBookmark,
 }) {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
@@ -79,8 +86,8 @@ export default function RightPanel({
   const [activeTab, setActiveTab] = useState('moves');
   const [isPlaying, setIsPlaying] = useState(false);
   const prevMoveIndexRef = useRef(currentMoveIndex);
+  const requestedUrlRef = useRef('');
 
-  // Play audio on move index changes
   useEffect(() => {
     if (prevMoveIndexRef.current !== currentMoveIndex) {
       const moveObj = currentMoveIndex > 0 && gameData?.moves ? gameData.moves[currentMoveIndex - 1] : null;
@@ -89,18 +96,17 @@ export default function RightPanel({
     }
   }, [currentMoveIndex, soundEnabled, soundVolume, soundTheme, gameData]);
 
-  // Auto-play interval effect
   useEffect(() => {
     let interval = null;
     if (isPlaying) {
       interval = setInterval(() => {
-        setCurrentMoveIndex(prev => {
+        setCurrentMoveIndex((previous) => {
           const max = gameData?.moves?.length || 0;
-          if (prev >= max) {
+          if (previous >= max) {
             setIsPlaying(false);
-            return prev;
+            return previous;
           }
-          return prev + 1;
+          return previous + 1;
         });
       }, autoPlaySpeed);
     }
@@ -109,19 +115,10 @@ export default function RightPanel({
     };
   }, [isPlaying, autoPlaySpeed, gameData, setCurrentMoveIndex]);
 
-  React.useEffect(() => {
-    const path = window.location.pathname;
-    if (path.includes('/game/') || path.includes('/live/')) {
-      const chessComUrl = `https://www.chess.com${path}`;
-      setUrl(chessComUrl);
-      fetchGame(chessComUrl);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const fetchGame = async (targetUrl) => {
     const finalUrl = typeof targetUrl === 'string' ? targetUrl : url;
     if (!finalUrl) return;
+    setIsPlaying(false);
     setLoading(true);
     setError(null);
     try {
@@ -129,49 +126,92 @@ export default function RightPanel({
       const response = await fetch(`${apiBase}/api/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          url: finalUrl, 
+        body: JSON.stringify({
+          url: finalUrl,
           depth: engineDepth || 10,
           engine: chessEngine,
-          maxTime: maxTime,
-          numLines: numLines,
-          threads: threads
-        })
+          maxTime,
+          numLines,
+          threads,
+        }),
       });
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.detail || 'Failed to fetch game data');
-      }
-      const data = await response.json();
-      setGameData(data);
-      setCurrentMoveIndex(0);
-    } catch (err) {
-      setError(err.message);
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.detail || 'Failed to fetch game data');
+      setUrl(finalUrl);
+      onGameLoaded?.(body, finalUrl);
+    } catch (fetchError) {
+      setError(fetchError.message || 'Failed to fetch game data');
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!requestedUrl || requestedUrlRef.current === requestedUrl) return;
+    requestedUrlRef.current = requestedUrl;
+    setUrl(requestedUrl);
+    onRequestedUrlConsumed?.();
+    fetchGame(requestedUrl);
+  }, [requestedUrl]);
+
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path.includes('/game/') || path.includes('/live/')) {
+      const chessComUrl = `https://www.chess.com${path}`;
+      setUrl(chessComUrl);
+      fetchGame(chessComUrl);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleSpace = (event) => {
+      if (event.code !== 'Space' || !gameData) return;
+      if (['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(document.activeElement?.tagName)) return;
+      event.preventDefault();
+      setIsPlaying((previous) => !previous);
+    };
+    window.addEventListener('keydown', handleSpace);
+    return () => window.removeEventListener('keydown', handleSpace);
+  }, [gameData]);
 
   const maxMoves = gameData?.moves?.length || 0;
   const goToStart = () => { setIsPlaying(false); setCurrentMoveIndex(0); };
   const goToEnd = () => { setIsPlaying(false); setCurrentMoveIndex(maxMoves); };
   const goPrev = () => { setIsPlaying(false); setCurrentMoveIndex(Math.max(0, currentMoveIndex - 1)); };
   const goNext = () => { setIsPlaying(false); setCurrentMoveIndex(Math.min(maxMoves, currentMoveIndex + 1)); };
-  const togglePlay = () => setIsPlaying(prev => !prev);
+  const togglePlay = () => setIsPlaying((previous) => !previous);
+
+  const currentMove = currentMoveIndex > 0 ? gameData?.moves?.[currentMoveIndex - 1] : null;
+  const bookmarkedSet = new Set(bookmarks);
+  const keyMomentIndices = gameData?.moves?.reduce((indices, move, index) => {
+    const moveIndex = index + 1;
+    if (isImportantMove(move) || bookmarkedSet.has(moveIndex)) indices.push(moveIndex);
+    return indices;
+  }, []) || [];
+  const previousKey = [...keyMomentIndices].reverse().find((index) => index < currentMoveIndex);
+  const nextKey = keyMomentIndices.find((index) => index > currentMoveIndex);
 
   const movePairs = [];
-  if (gameData && gameData.moves) {
+  if (gameData?.moves) {
     let currentPair = {};
-    gameData.moves.forEach((move, i) => {
-      const moveIndex = i + 1;
+    gameData.moves.forEach((move, index) => {
+      const moveIndex = index + 1;
       if (move.color === 'white') {
-        currentPair = { num: move.number, w: move.notation, wClass: move.classification, wTime: move.time, wIndex: moveIndex };
-        if (i === gameData.moves.length - 1) movePairs.push(currentPair);
+        currentPair = {
+          num: move.number,
+          w: move.notation,
+          wClass: move.classification,
+          wTime: move.time,
+          wIndex: moveIndex,
+          wImportant: isImportantMove(move),
+        };
+        if (index === gameData.moves.length - 1) movePairs.push(currentPair);
       } else {
         currentPair.b = move.notation;
         currentPair.bClass = move.classification;
         currentPair.bTime = move.time;
         currentPair.bIndex = moveIndex;
+        currentPair.bImportant = isImportantMove(move);
         movePairs.push(currentPair);
         currentPair = {};
       }
@@ -180,12 +220,11 @@ export default function RightPanel({
 
   const whiteCounts = { brilliant: 0, great: 0, best: 0, excellent: 0, good: 0, inaccuracy: 0, mistake: 0, miss: 0, blunder: 0, book: 0 };
   const blackCounts = { brilliant: 0, great: 0, best: 0, excellent: 0, good: 0, inaccuracy: 0, mistake: 0, miss: 0, blunder: 0, book: 0 };
-  
-  if (gameData && gameData.moves) {
-    gameData.moves.forEach(m => {
-      const cls = m.classification?.toLowerCase();
-      if (m.color === 'white' && whiteCounts[cls] !== undefined) whiteCounts[cls]++;
-      if (m.color === 'black' && blackCounts[cls] !== undefined) blackCounts[cls]++;
+  if (gameData?.moves) {
+    gameData.moves.forEach((move) => {
+      const cls = move.classification?.toLowerCase();
+      if (move.color === 'white' && whiteCounts[cls] !== undefined) whiteCounts[cls] += 1;
+      if (move.color === 'black' && blackCounts[cls] !== undefined) blackCounts[cls] += 1;
     });
   }
 
@@ -199,21 +238,53 @@ export default function RightPanel({
     { label: 'Mistake', key: 'mistake', icon: '?' },
     { label: 'Miss', key: 'miss', icon: '✖' },
     { label: 'Blunder', key: 'blunder', icon: '??' },
-    { label: 'Book', key: 'book', icon: '📖' }
+    { label: 'Book', key: 'book', icon: '📖' },
   ];
 
+  const renderMoveButton = ({ notation, cls, time, index, important, sideLabel, moveNumber }) => {
+    if (!notation || !index) return <span className="move-col move-col--empty" aria-hidden="true" />;
+    const bookmarked = bookmarkedSet.has(index);
+    return (
+      <button
+        type="button"
+        className={`move-col ${currentMoveIndex === index ? 'selected' : ''} ${important ? 'key-move' : ''} ${bookmarked ? 'bookmarked-move' : ''}`}
+        onClick={() => { setIsPlaying(false); if (index) setCurrentMoveIndex(index); }}
+        aria-label={`Move ${moveNumber} ${sideLabel}: ${notation || 'none'}${bookmarked ? ', bookmarked' : ''}`}
+      >
+        <div className="move-text">
+          {bookmarked && <span className="bookmark-marker" title="Bookmarked">◆</span>}
+          {cls && (
+            <span className={`move-class-icon ${CLASS_COLORS[cls?.toLowerCase()] || ''}`} title={cls}>
+              {getIcon(cls)}
+            </span>
+          )}
+          {renderSan(notation, cls, figurineNotation)}
+        </div>
+        <div className="move-time">
+          <div className="time-bar" />
+          <span>{time || ''}</span>
+        </div>
+      </button>
+    );
+  };
+
   return (
-    <div className="right-panel" aria-busy={loading}>
-      {/* URL Input */}
-      <div className="url-input-area">
+    <div className="right-panel right-panel--motion" aria-busy={loading}>
+      <div className="url-input-area review-source-area">
         <div className="panel-heading">
           <div>
-            <h1>Game review</h1>
-            <p>Paste a Chess.com or Lichess game link</p>
+            <h1>Game Review</h1>
+            <p>Review a recent game or paste a game link</p>
           </div>
-          <span className={`engine-status ${loading ? 'is-busy' : ''}`}><span /> {loading ? 'Analyzing' : 'Ready'}</span>
+          <div className="review-heading-actions">
+            <span className={`engine-status ${loading ? 'is-busy' : ''}`}><span /> {loading ? 'Analyzing' : 'Ready'}</span>
+            <button type="button" className="hide-review-btn" onClick={onHideReview} aria-expanded="true">
+              Hide Review
+            </button>
+          </div>
         </div>
-        <form className="url-input-row" onSubmit={(e) => { e.preventDefault(); fetchGame(); }}>
+
+        <form className="url-input-row" onSubmit={(event) => { event.preventDefault(); fetchGame(); }}>
           <input
             className="url-input"
             type="url"
@@ -221,55 +292,26 @@ export default function RightPanel({
             autoComplete="off"
             spellCheck={false}
             aria-label="Game URL"
-            placeholder="Paste game URL"
+            placeholder="Chess.com or Lichess game URL"
             value={url}
-            onChange={e => setUrl(e.target.value)}
+            onChange={(event) => setUrl(event.target.value)}
           />
           <button type="submit" className="analyze-btn" disabled={loading || !url.trim()}>
-            {loading && <Loader2 size={14} className="spin" aria-hidden="true" style={{ animation: 'spin 2s linear infinite' }} />}
+            {loading && <Loader2 size={14} className="spin" aria-hidden="true" />}
             {loading ? 'Loading…' : 'Analyze'}
           </button>
         </form>
         {error && <div className="error-msg" role="alert">{error}</div>}
       </div>
 
-      {/* Secondary Tabs */}
       <div className="panel-tabs-secondary" role="tablist" aria-label="Game Analysis Sections">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'moves'}
-          aria-controls="moves-panel"
-          className={`panel-tab-sec ${activeTab === 'moves' ? 'active' : ''}`}
-          onClick={() => setActiveTab('moves')}
-        >
-          Moves
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'analysis'}
-          aria-controls="analysis-panel"
-          className={`panel-tab-sec ${activeTab === 'analysis' ? 'active' : ''}`}
-          onClick={() => setActiveTab('analysis')}
-        >
-          Analysis
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'openings'}
-          aria-controls="openings-panel"
-          className={`panel-tab-sec ${activeTab === 'openings' ? 'active' : ''}`}
-          onClick={() => setActiveTab('openings')}
-        >
-          Openings
-        </button>
+        <button type="button" role="tab" aria-selected={activeTab === 'moves'} aria-controls="moves-panel" className={`panel-tab-sec ${activeTab === 'moves' ? 'active' : ''}`} onClick={() => setActiveTab('moves')}>Moves</button>
+        <button type="button" role="tab" aria-selected={activeTab === 'analysis'} aria-controls="analysis-panel" className={`panel-tab-sec ${activeTab === 'analysis' ? 'active' : ''}`} onClick={() => setActiveTab('analysis')}>Analysis</button>
+        <button type="button" role="tab" aria-selected={activeTab === 'openings'} aria-controls="openings-panel" className={`panel-tab-sec ${activeTab === 'openings' ? 'active' : ''}`} onClick={() => setActiveTab('openings')}>Openings</button>
       </div>
 
-      {/* Engine Info */}
       <div className="engine-info">
-        <span>Starting Position</span>
+        <span>{currentMove ? `Move ${currentMoveIndex}` : 'Starting Position'}</span>
         <span className="engine-name">
           <Cpu size={11} aria-hidden="true" /> {
             chessEngine === 'stockfish18' ? 'Stockfish 18' :
@@ -279,97 +321,83 @@ export default function RightPanel({
             'Engine Off'
           } (Depth {engineDepth || 10})
           {onOpenSettings && (
-            <button
-              type="button"
-              onClick={onOpenSettings}
-              aria-label="Engine settings"
-              style={{ background: 'none', border: 'none', padding: '2px', cursor: 'pointer', color: 'inherit', display: 'inline-flex' }}
-            >
+            <button type="button" onClick={onOpenSettings} aria-label="Engine settings" className="engine-settings-btn">
               <Settings size={11} aria-hidden="true" />
             </button>
           )}
         </span>
       </div>
 
-      {/* Accuracy Info */}
-      {gameData && gameData.accuracy && (
+      {gameData?.accuracy && (
         <div className="accuracy-info">
           <span style={{ color: '#d4a843', fontVariantNumeric: 'tabular-nums' }}>White Accuracy: {gameData.accuracy.white}%</span>
           <span style={{ color: '#5b7fa6', fontVariantNumeric: 'tabular-nums' }}>Black Accuracy: {gameData.accuracy.black}%</span>
         </div>
       )}
 
-      {/* Tab content view */}
+      {currentMove && (
+        <MoveStory
+          move={currentMove}
+          moveIndex={currentMoveIndex}
+          bookmarked={bookmarkedSet.has(currentMoveIndex)}
+          onToggleBookmark={onToggleBookmark}
+          onPreviousKey={() => { setIsPlaying(false); if (previousKey) setCurrentMoveIndex(previousKey); }}
+          onNextKey={() => { setIsPlaying(false); if (nextKey) setCurrentMoveIndex(nextKey); }}
+          hasPreviousKey={Boolean(previousKey)}
+          hasNextKey={Boolean(nextKey)}
+        />
+      )}
+
       {activeTab === 'moves' && (
         <div className="moves-list panel-content" id="moves-panel" role="tabpanel">
           {!gameData && (
             <div className="empty-state">
               <div className="empty-state-icon">♞</div>
               <h2>Your review starts here</h2>
-              <p>Paste a game link above to see engine evaluations, move classifications, and accuracy.</p>
+              <p>Paste a game link or choose one from History. Key moments, best-move arrows, and bookmarks appear as you replay.</p>
             </div>
           )}
-          {movePairs.map((m, idx) => (
-            <div key={idx} className="move-row">
-              <div className="move-num">{m.num}.</div>
-
-              <button
-                type="button"
-                className={`move-col ${currentMoveIndex === m.wIndex ? 'selected' : ''}`}
-                onClick={() => { setIsPlaying(false); if (m.wIndex) setCurrentMoveIndex(m.wIndex); }}
-                aria-label={`Move ${m.num} White: ${m.w || 'none'}`}
-              >
-                <div className="move-text">
-                  {m.wClass && (
-                    <span className={`move-class-icon ${CLASS_COLORS[m.wClass?.toLowerCase()] || ''}`} title={m.wClass}>
-                      {getIcon(m.wClass)}
-                    </span>
-                  )}
-                  {renderSan(m.w, m.wClass, figurineNotation)}
-                </div>
-                <div className="move-time">
-                  <div className="time-bar"></div>
-                  <span>{m.wTime || ''}</span>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                className={`move-col ${currentMoveIndex === m.bIndex ? 'selected' : ''}`}
-                onClick={() => { setIsPlaying(false); if (m.bIndex) setCurrentMoveIndex(m.bIndex); }}
-                aria-label={`Move ${m.num} Black: ${m.b || 'none'}`}
-              >
-                <div className="move-text">
-                  {m.bClass && (
-                    <span className={`move-class-icon ${CLASS_COLORS[m.bClass?.toLowerCase()] || ''}`} title={m.bClass}>
-                      {getIcon(m.bClass)}
-                    </span>
-                  )}
-                  {renderSan(m.b, m.bClass, figurineNotation)}
-                </div>
-                <div className="move-time">
-                  <div className="time-bar"></div>
-                  <span>{m.bTime || ''}</span>
-                </div>
-              </button>
+          {movePairs.map((movePair, index) => (
+            <div key={index} className="move-row">
+              <div className="move-num">{movePair.num}.</div>
+              {renderMoveButton({
+                notation: movePair.w,
+                cls: movePair.wClass,
+                time: movePair.wTime,
+                index: movePair.wIndex,
+                important: movePair.wImportant,
+                sideLabel: 'White',
+                moveNumber: movePair.num,
+              })}
+              {renderMoveButton({
+                notation: movePair.b,
+                cls: movePair.bClass,
+                time: movePair.bTime,
+                index: movePair.bIndex,
+                important: movePair.bImportant,
+                sideLabel: 'Black',
+                moveNumber: movePair.num,
+              })}
             </div>
           ))}
 
-          {gameData && <div className="stats-container">
-            {statRows.map((row) => {
-              const w = whiteCounts[row.key];
-              const b = blackCounts[row.key];
-              if (w === 0 && b === 0 && row.key !== 'best' && row.key !== 'blunder') return null;
-              return (
-                <div key={row.key} className="stat-row" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                  <div className="stat-label">{row.label}</div>
-                  <div className={`stat-white ${row.key}`}>{w}</div>
-                  <div className={`stat-icon ${CLASS_COLORS[row.key]}`}>{row.icon}</div>
-                  <div className={`stat-black ${row.key}`}>{b}</div>
-                </div>
-              );
-            })}
-          </div>}
+          {gameData && (
+            <div className="stats-container">
+              {statRows.map((row) => {
+                const white = whiteCounts[row.key];
+                const black = blackCounts[row.key];
+                if (white === 0 && black === 0 && row.key !== 'best' && row.key !== 'blunder') return null;
+                return (
+                  <div key={row.key} className="stat-row" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                    <div className="stat-label">{row.label}</div>
+                    <div className={`stat-white ${row.key}`}>{white}</div>
+                    <div className={`stat-icon ${CLASS_COLORS[row.key]}`}>{row.icon}</div>
+                    <div className={`stat-black ${row.key}`}>{black}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -377,7 +405,7 @@ export default function RightPanel({
         <div className="empty-state panel-content" id="analysis-panel" role="tabpanel">
           <div className="empty-state-icon">⌁</div>
           <h2>Analysis overview</h2>
-          <p>{gameData ? 'Use the move list to explore each engine evaluation.' : 'Analyze a game first to unlock its evaluation.'}</p>
+          <p>{gameData ? 'Use key-moment navigation to jump between the moves that changed the game.' : 'Analyze a game first to unlock its evaluation.'}</p>
         </div>
       )}
 
@@ -385,15 +413,15 @@ export default function RightPanel({
         <div className="empty-state panel-content" id="openings-panel" role="tabpanel">
           <div className="empty-state-icon">♙</div>
           <h2>Opening explorer</h2>
-          <p>{gameData ? 'Opening details will appear when they are available for this game.' : 'Analyze a game to identify its opening.'}</p>
+          <p>{gameData ? 'Opening details appear here when they are available for this game.' : 'Analyze a game to identify its opening.'}</p>
         </div>
       )}
 
-      {/* Footer Controls */}
       <div className="panel-footer">
         <div className="move-progress" aria-live="polite">
           <span>Move</span>
           <strong>{currentMoveIndex} / {maxMoves}</strong>
+          {keyMomentIndices.length > 0 && <small>{keyMomentIndices.length} key moments</small>}
         </div>
         <button type="button" className="review-btn" onClick={() => fetchGame()} disabled={loading || !url.trim()}>
           {loading ? 'Analyzing game…' : '★ Analyze again'}
@@ -401,21 +429,18 @@ export default function RightPanel({
 
         <div className="controls">
           <button type="button" className="control-btn" title="Share" aria-label="Share game"><Share2 size={15} aria-hidden="true" /></button>
-
           <div className="controls-main">
             <button type="button" className="control-btn" onClick={goToStart} disabled={!gameData || currentMoveIndex === 0} title="Start (Home)" aria-label="First move"><SkipBack size={16} aria-hidden="true" /></button>
             <button type="button" className="control-btn" onClick={goPrev} disabled={!gameData || currentMoveIndex === 0} title="Previous (←)" aria-label="Previous move"><ChevronLeft size={16} aria-hidden="true" /></button>
-            <button type="button" className={`control-btn play-control ${isPlaying ? 'active' : ''}`} onClick={togglePlay} disabled={!gameData} title={isPlaying ? "Pause auto-play" : "Start auto-play"} aria-label="Auto play moves">
+            <button type="button" className={`control-btn play-control ${isPlaying ? 'active' : ''}`} onClick={togglePlay} disabled={!gameData} title={isPlaying ? 'Pause auto-play (Space)' : 'Start auto-play (Space)'} aria-label="Auto play moves">
               {isPlaying ? <Pause size={16} aria-hidden="true" /> : <Play size={16} aria-hidden="true" />}
             </button>
             <button type="button" className="control-btn" onClick={goNext} disabled={!gameData || currentMoveIndex === maxMoves} title="Next (→)" aria-label="Next move"><ChevronRight size={16} aria-hidden="true" /></button>
             <button type="button" className="control-btn" onClick={goToEnd} disabled={!gameData || currentMoveIndex === maxMoves} title="End (End)" aria-label="Last move"><SkipForward size={16} aria-hidden="true" /></button>
           </div>
-
-          <button type="button" className={`control-btn ${isFlipped ? 'active' : ''}`} onClick={onToggleFlip} title={isFlipped ? "Flip board (Black perspective)" : "Flip board (White perspective)"} aria-label="Flip board perspective" aria-pressed={isFlipped}><RefreshCw size={15} aria-hidden="true" /></button>
+          <button type="button" className={`control-btn ${isFlipped ? 'active' : ''}`} onClick={onToggleFlip} title={isFlipped ? 'Black perspective' : 'White perspective'} aria-label="Flip board perspective" aria-pressed={isFlipped}><RefreshCw size={15} aria-hidden="true" /></button>
         </div>
       </div>
     </div>
   );
 }
-
