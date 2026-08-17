@@ -16,7 +16,6 @@ import {
 import { playMoveSound } from '../utils/audio';
 import { isImportantMove } from '../utils/review';
 import MoveStory from './MoveStory';
-import ProfileLoader from './ProfileLoader';
 
 const CLASS_COLORS = {
   brilliant: 'brilliant', great: 'great', best: 'best', excellent: 'excellent',
@@ -75,8 +74,9 @@ export default function RightPanel({
   maxTime = 5,
   numLines = 3,
   threads = 1,
-  profileUsername = '',
-  profileData = null,
+  onHideReview,
+  requestedUrl = '',
+  onRequestedUrlConsumed,
   bookmarks = [],
   onToggleBookmark,
 }) {
@@ -86,6 +86,7 @@ export default function RightPanel({
   const [activeTab, setActiveTab] = useState('moves');
   const [isPlaying, setIsPlaying] = useState(false);
   const prevMoveIndexRef = useRef(currentMoveIndex);
+  const requestedUrlRef = useRef('');
 
   useEffect(() => {
     if (prevMoveIndexRef.current !== currentMoveIndex) {
@@ -144,6 +145,14 @@ export default function RightPanel({
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!requestedUrl || requestedUrlRef.current === requestedUrl) return;
+    requestedUrlRef.current = requestedUrl;
+    setUrl(requestedUrl);
+    onRequestedUrlConsumed?.();
+    fetchGame(requestedUrl);
+  }, [requestedUrl]);
 
   useEffect(() => {
     const path = window.location.pathname;
@@ -264,28 +273,17 @@ export default function RightPanel({
       <div className="url-input-area review-source-area">
         <div className="panel-heading">
           <div>
-            <h1>Game review</h1>
+            <h1>Game Review</h1>
             <p>Review a recent game or paste a game link</p>
           </div>
-          <span className={`engine-status ${loading ? 'is-busy' : ''}`}><span /> {loading ? 'Analyzing' : 'Ready'}</span>
+          <div className="review-heading-actions">
+            <span className={`engine-status ${loading ? 'is-busy' : ''}`}><span /> {loading ? 'Analyzing' : 'Ready'}</span>
+            <button type="button" className="hide-review-btn" onClick={onHideReview} aria-expanded="true">
+              Hide Review
+            </button>
+          </div>
         </div>
 
-        <ProfileLoader
-          username={profileUsername}
-          profile={profileData}
-          showAccount={false}
-          onSelectGame={(gameUrl) => fetchGame(gameUrl)}
-        />
-
-        {!profileData ? (
-          <button type="button" className="test-sound-btn" onClick={onOpenSettings}>
-            Connect Chess.com in Settings to show recent games
-          </button>
-        ) : null}
-
-        <div className="manual-game-divider">
-          <span>{profileData?.games?.length ? 'or paste a game link' : 'paste a game link'}</span>
-        </div>
         <form className="url-input-row" onSubmit={(event) => { event.preventDefault(); fetchGame(); }}>
           <input
             className="url-input"
@@ -356,7 +354,7 @@ export default function RightPanel({
             <div className="empty-state">
               <div className="empty-state-icon">♞</div>
               <h2>Your review starts here</h2>
-              <p>Pick a recent game or paste a game link. Key moments, best-move arrows, and bookmarks appear as you replay.</p>
+              <p>Paste a game link or choose one from History. Key moments, best-move arrows, and bookmarks appear as you replay.</p>
             </div>
           )}
           {movePairs.map((movePair, index) => (

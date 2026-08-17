@@ -5,6 +5,7 @@ import BoardArea from './components/BoardArea';
 import RightPanel from './components/RightPanel';
 import Sidebar from './components/Sidebar';
 import SettingsModal from './components/SettingsModal';
+import GameHistory from './components/GameHistory';
 import {
   bookmarkStorageKey,
   getPlayerPerspective,
@@ -16,13 +17,14 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001';
 const PROFILE_STORAGE_KEY = 'chess_chesscom_username';
 const profileRequestCache = new Map();
 
-async function fetchChessComProfile(username) {
-  const cacheKey = normalizeUsername(username).toLowerCase();
+async function fetchChessComProfile(username, limit = 12) {
+  const safeLimit = Math.min(20, Math.max(1, Number(limit) || 12));
+  const cacheKey = `${normalizeUsername(username).toLowerCase()}:${safeLimit}`;
   const cached = profileRequestCache.get(cacheKey);
   if (cached && Date.now() - cached.createdAt < 5000) return cached.promise;
 
   const request = (async () => {
-    const response = await fetch(`${API_BASE}/api/chesscom/profile/${encodeURIComponent(username)}?limit=12`);
+    const response = await fetch(`${API_BASE}/api/chesscom/profile/${encodeURIComponent(username)}?limit=${safeLimit}`);
     const body = await response.json();
     if (!response.ok) throw new Error(body.detail || 'Could not load Chess.com profile');
     return body;
@@ -54,6 +56,9 @@ function App() {
   const [bookmarks, setBookmarks] = useState([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [activeView, setActiveView] = useState('review');
+  const [isReviewPanelVisible, setIsReviewPanelVisible] = useState(true);
+  const [pendingHistoryGameUrl, setPendingHistoryGameUrl] = useState('');
 
   const [defaultChessUsername, setDefaultChessUsername] = useState(
     () => normalizeUsername(localStorage.getItem(PROFILE_STORAGE_KEY)),
@@ -80,7 +85,7 @@ function App() {
   const [numLines, setNumLines] = useState(() => Number(localStorage.getItem('chess_numLines')) || 3);
   const [threads, setThreads] = useState(() => Number(localStorage.getItem('chess_threads')) || 1);
 
-  async function loadChessProfile(requestedUsername, { persist = true } = {}) {
+  async function loadChessProfile(requestedUsername, { persist = true, limit = 12 } = {}) {
     const username = normalizeUsername(requestedUsername);
     if (!username) {
       setProfileError('Enter a Chess.com username.');
@@ -90,7 +95,7 @@ function App() {
     setProfileLoading(true);
     setProfileError('');
     try {
-      const body = await fetchChessComProfile(username);
+      const body = await fetchChessComProfile(username, limit);
       const canonicalUsername = normalizeUsername(body.username || username);
       setProfileData(body);
       setDefaultChessUsername(canonicalUsername);
@@ -159,6 +164,21 @@ function App() {
     setBookmarks(readBookmarks(sourceUrl));
   };
 
+  const refreshHistory = async () => {
+    if (!defaultChessUsername) {
+      setIsSettingsOpen(true);
+      return null;
+    }
+    return loadChessProfile(defaultChessUsername, { persist: false, limit: 20 });
+  };
+
+  const openHistoryGame = (gameUrl) => {
+    if (!gameUrl) return;
+    setPendingHistoryGameUrl(gameUrl);
+    setActiveView('review');
+    setIsReviewPanelVisible(true);
+  };
+
   const toggleCurrentBookmark = () => {
     if (!currentGameUrl || currentMoveIndex < 1) return;
     setBookmarks((previous) => {
@@ -197,41 +217,74 @@ function App() {
 
   return (
     <div className="layout-container">
-      <Sidebar onOpenSettings={() => setIsSettingsOpen(true)} />
-      <div className="main-content">
-        <BoardArea
-          gameData={gameData}
-          currentMoveIndex={currentMoveIndex}
-          isFlipped={isFlipped}
-          boardTheme={boardTheme}
-          showArrows={showArrows}
-          showCoordinates={showCoordinates}
-          profileUsername={defaultChessUsername}
-          profileAvatar={profileData?.avatar || ""}
-        />
-        <RightPanel
-          gameData={gameData}
-          onGameLoaded={handleGameLoaded}
-          currentMoveIndex={currentMoveIndex}
-          setCurrentMoveIndex={setCurrentMoveIndex}
-          engineDepth={engineDepth}
-          onOpenSettings={() => setIsSettingsOpen(true)}
-          isFlipped={isFlipped}
-          onToggleFlip={() => setIsFlipped((previous) => !previous)}
-          soundEnabled={soundEnabled}
-          soundVolume={soundVolume}
-          soundTheme={soundTheme}
-          autoPlaySpeed={autoPlaySpeed}
-          figurineNotation={figurineNotation}
-          chessEngine={chessEngine}
-          maxTime={maxTime}
-          numLines={numLines}
-          threads={threads}
-          profileUsername={defaultChessUsername}
-          profileData={profileData}
-          bookmarks={bookmarks}
-          onToggleBookmark={toggleCurrentBookmark}
-        />
+      <Sidebar
+        activeView={activeView}
+        onChangeView={(view) => {
+          setActiveView(view);
+          if (view === 'history' && defaultChessUsername) refreshHistory();
+        }}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+      />
+      <div className={`main-content ${activeView === 'review' && !isReviewPanelVisible ? 'review-panel-hidden' : ''}`}>
+        {activeView === 'history' ? (
+          <GameHistory
+            username={defaultChessUsername}
+            profile={profileData}
+            loading={profileLoading}
+            error={profileError}
+            onRefresh={refreshHistory}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+            onSelectGame={openHistoryGame}
+          />
+        ) : (
+          <>
+            <BoardArea
+              gameData={gameData}
+              currentMoveIndex={currentMoveIndex}
+              isFlipped={isFlipped}
+              boardTheme={boardTheme}
+              showArrows={showArrows}
+              showCoordinates={showCoordinates}
+              profileUsername={defaultChessUsername}
+              profileAvatar={profileData?.avatar || ""}
+            />
+            {isReviewPanelVisible ? (
+              <RightPanel
+                gameData={gameData}
+                onGameLoaded={handleGameLoaded}
+                currentMoveIndex={currentMoveIndex}
+                setCurrentMoveIndex={setCurrentMoveIndex}
+                engineDepth={engineDepth}
+                onOpenSettings={() => setIsSettingsOpen(true)}
+                isFlipped={isFlipped}
+                onToggleFlip={() => setIsFlipped((previous) => !previous)}
+                soundEnabled={soundEnabled}
+                soundVolume={soundVolume}
+                soundTheme={soundTheme}
+                autoPlaySpeed={autoPlaySpeed}
+                figurineNotation={figurineNotation}
+                chessEngine={chessEngine}
+                maxTime={maxTime}
+                numLines={numLines}
+                threads={threads}
+                bookmarks={bookmarks}
+                onToggleBookmark={toggleCurrentBookmark}
+                onHideReview={() => setIsReviewPanelVisible(false)}
+                requestedUrl={pendingHistoryGameUrl}
+                onRequestedUrlConsumed={() => setPendingHistoryGameUrl('')}
+              />
+            ) : (
+              <button
+                type="button"
+                className="show-review-btn"
+                onClick={() => setIsReviewPanelVisible(true)}
+                aria-expanded="false"
+              >
+                Show Review
+              </button>
+            )}
+          </>
+        )}
       </div>
       <SettingsModal
         isOpen={isSettingsOpen}

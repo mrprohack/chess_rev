@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This is a full-stack Chess.com and Lichess game-review app. A user can submit a game URL or load a public Chess.com profile, choose a recent game, have the FastAPI backend fetch its PGN, analyze it with Stockfish, cache the result in SQLite, and replay the annotated game in the React frontend.
+This is a full-stack Chess.com and Lichess game-review app. A user can submit a game URL or load a public Chess.com profile, browse the latest 20 standard games in a dedicated History view, have the FastAPI backend fetch the selected PGN, analyze it with Stockfish, cache the result in SQLite, and replay the annotated game in the React frontend.
 
 Keep this file accurate. Whenever a change affects architecture, commands, API contracts, persistence, deployment, or the development workflow, update this guide in the same change.
 
@@ -29,11 +29,13 @@ backend/
   venv/                    Required local virtual environment (gitignored)
 
 frontend/
-  src/App.jsx              Application state, saved Chess.com profile, bookmarks, and layout composition
-  src/components/          Board, right panel, profile loader, move story, sidebar, and settings UI
+  src/App.jsx              Application state, Review/History view state, saved profile, bookmarks, layout composition
+  src/components/GameHistory.jsx Latest-20 Chess.com history list and empty/error states
+  src/components/RightPanel.jsx Review-only move analysis, source URL, playback, and hide control
+  src/components/           Board, move story, profile loader, sidebar, settings, and history UI
   src/utils/boardMotion.js Deterministic UCI/FEN replay transitions for forward/backward animation
-  src/utils/review.js      Profile perspective, key-move story, outcome, and bookmark helpers
-  src/ReviewEnhancements.css Profile/replay/key-moment animation and responsive styles
+  src/utils/review.js      Profile perspective, history row formatting, key-move story, outcome, and bookmark helpers
+  src/ReviewEnhancements.css Profile/replay/history/key-moment animation and responsive styles
   public/pieces_alt/       Active SVG piece set
   package.json             Vite and unit-test commands
 
@@ -85,7 +87,7 @@ When starting services, print both local URLs. The backend binds to `0.0.0.0:800
 - `parse_pgn` owns the Stockfish process and must always close it. Reuse the post-move evaluation as the next pre-move evaluation; do not restore duplicate engine analysis.
 - Successful response fields are consumed by the frontend. Preserve top-level player/result/accuracy/count fields and each move's `number`, `color`, `notation`, `classification`, `fen`, `time`, `eval`, `clock`, `played_move`, and `best_move` fields unless frontend changes ship with the backend change.
 
-`GET /api/chesscom/profile/{username}?limit=12` is read-only and uses Chess.com's public PubAPI.
+`GET /api/chesscom/profile/{username}?limit=12` is read-only and uses Chess.com's public PubAPI. The History view requests `limit=20` and never paginates beyond that versioned UI limit.
 
 - Return public profile identity/avatar/link fields, rapid/blitz/bullet ratings, and normalized recent standard-chess games.
 - Keep the limit bounded at the FastAPI boundary.
@@ -105,12 +107,15 @@ When starting services, print both local URLs. The backend binds to `0.0.0.0:800
 
 - Plain React JSX; no TypeScript or client state library.
 - Keep application state lifted in `frontend/src/App.jsx`.
+- `App.jsx` owns `activeView` (`review` or `history`) and the Review-panel visibility state; do not add a routing dependency for these two views.
 - Use existing CSS custom properties and theme handling instead of adding a styling framework.
 - `ChessBoard.jsx` uses image-based pieces from `/pieces_alt/` and replay helpers from `src/utils/boardMotion.js`; preserve stable piece identity across animation changes.
 - One-ply replay should use the exact backend `played_move` UCI transition. FEN synchronization remains the fallback for jumps, initialization, and recovery.
 - Captures, castling, promotions, and one-ply backward replay must preserve deterministic piece identity and reduced-motion behavior.
 - Profile loading is read-only. Successful profile loads may persist the canonical username and orient reviewed games to that player's side.
-- Chess.com account/profile controls live in `SettingsModal`; the review panel may show recent games but should not duplicate the account setup form.
+- Chess.com account/profile controls live in `SettingsModal`; `RightPanel.jsx` is review-only and must not duplicate account setup or the History list.
+- `GameHistory.jsx` renders at most the latest 20 normalized standard games and delegates refresh/selection back to `App.jsx`.
+- Hiding the Review panel must not reset the current game, move index, bookmarks, orientation, or analysis state.
 - Move bookmarks are game-scoped local state and must not alter the backend analysis contract.
 - The settings panel sends all engine options listed in the backend contract. Keep frontend and backend validation aligned.
 
