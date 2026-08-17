@@ -110,6 +110,7 @@ When starting services, print both local URLs. The backend binds to `0.0.0.0:800
 - One-ply replay should use the exact backend `played_move` UCI transition. FEN synchronization remains the fallback for jumps, initialization, and recovery.
 - Captures, castling, promotions, and one-ply backward replay must preserve deterministic piece identity and reduced-motion behavior.
 - Profile loading is read-only. Successful profile loads may persist the canonical username and orient reviewed games to that player's side.
+- Chess.com account/profile controls live in `SettingsModal`; the review panel may show recent games but should not duplicate the account setup form.
 - Move bookmarks are game-scoped local state and must not alter the backend analysis contract.
 - The settings panel sends all engine options listed in the backend contract. Keep frontend and backend validation aligned.
 
