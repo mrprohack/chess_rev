@@ -46,6 +46,19 @@ export default function BoardArea({
   const previousMoveIndex = previousMoveIndexRef.current;
   const delta = currentMoveIndex - previousMoveIndex;
   const isJump = Math.abs(delta) > 1;
+  const mediaReducedMotion = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches || false;
+  const reducedMotion = reviewMotion?.reducedMotion ?? mediaReducedMotion;
+  const shouldAnimateImmediate = Math.abs(delta) === 1 && !reducedMotion;
+  const boardReviewMotion = delta === 0
+    ? reviewMotion
+    : {
+        ...reviewMotion,
+        delta,
+        isJump,
+        reducedMotion,
+        mode: shouldAnimateImmediate ? 'animate' : 'settled',
+        phase: shouldAnimateImmediate ? 'pieceMoving' : 'settled',
+      };
   let animationMove = null;
   let animationDirection = 'forward';
 
@@ -86,7 +99,7 @@ export default function BoardArea({
           showArrows={showArrows}
           showCoordinates={showCoordinates}
           isJump={isJump}
-          reviewMotion={reviewMotion}
+          reviewMotion={boardReviewMotion}
         />
       </div>
       {playerBar(bottomPlayer)}
