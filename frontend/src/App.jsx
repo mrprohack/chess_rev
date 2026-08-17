@@ -1,17 +1,67 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css';
+import './ReviewEnhancements.css';
 import BoardArea from './components/BoardArea';
 import RightPanel from './components/RightPanel';
 import Sidebar from './components/Sidebar';
 import SettingsModal from './components/SettingsModal';
+import {
+  bookmarkStorageKey,
+  getPlayerPerspective,
+  normalizeUsername,
+  toggleBookmark,
+} from './utils/review';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001';
+const PROFILE_STORAGE_KEY = 'chess_chesscom_username';
+const profileRequestCache = new Map();
+
+async function fetchChessComProfile(username) {
+  const cacheKey = normalizeUsername(username).toLowerCase();
+  const cached = profileRequestCache.get(cacheKey);
+  if (cached && Date.now() - cached.createdAt < 5000) return cached.promise;
+
+  const request = (async () => {
+    const response = await fetch(`${API_BASE}/api/chesscom/profile/${encodeURIComponent(username)}?limit=12`);
+    const body = await response.json();
+    if (!response.ok) throw new Error(body.detail || 'Could not load Chess.com profile');
+    return body;
+  })();
+
+  profileRequestCache.set(cacheKey, { promise: request, createdAt: Date.now() });
+  try {
+    return await request;
+  } catch (error) {
+    profileRequestCache.delete(cacheKey);
+    throw error;
+  }
+}
+
+function readBookmarks(gameUrl) {
+  if (!gameUrl) return [];
+  try {
+    const value = JSON.parse(localStorage.getItem(bookmarkStorageKey(gameUrl)) || '[]');
+    return Array.isArray(value) ? value.filter(Number.isInteger).sort((a, b) => a - b) : [];
+  } catch {
+    return [];
+  }
+}
 
 function App() {
   const [gameData, setGameData] = useState(null);
+  const [currentGameUrl, setCurrentGameUrl] = useState('');
   const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
+  const [bookmarks, setBookmarks] = useState([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
 
-  // Settings state with localStorage persistence
+  const [defaultChessUsername, setDefaultChessUsername] = useState(
+    () => normalizeUsername(localStorage.getItem(PROFILE_STORAGE_KEY)),
+  );
+  const [profileData, setProfileData] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState('');
+
   const [theme, setTheme] = useState(() => localStorage.getItem('chess_theme') || 'dark');
   const [engineDepth, setEngineDepth] = useState(() => Number(localStorage.getItem('chess_engineDepth')) || 10);
   const [boardTheme, setBoardTheme] = useState(() => localStorage.getItem('chess_boardTheme') || 'wood');
@@ -22,32 +72,62 @@ function App() {
   const [soundTheme, setSoundTheme] = useState(() => localStorage.getItem('chess_soundTheme') || 'classic');
   const [autoPlaySpeed, setAutoPlaySpeed] = useState(() => Number(localStorage.getItem('chess_autoPlaySpeed')) || 1000);
   const [figurineNotation, setFigurineNotation] = useState(() => localStorage.getItem('chess_figurineNotation') !== 'false');
-
-  // New Analysis Engine Settings
   const [chessEngine, setChessEngine] = useState(() => localStorage.getItem('chess_engineSelect') || 'stockfish18');
   const [maxTime, setMaxTime] = useState(() => Number(localStorage.getItem('chess_maxTime')) || 5);
   const [numLines, setNumLines] = useState(() => Number(localStorage.getItem('chess_numLines')) || 3);
   const [threads, setThreads] = useState(() => Number(localStorage.getItem('chess_threads')) || 1);
 
+  async function loadChessProfile(requestedUsername, { persist = true } = {}) {
+    const username = normalizeUsername(requestedUsername);
+    if (!username) {
+      setProfileError('Enter a Chess.com username.');
+      return null;
+    }
+
+    setProfileLoading(true);
+    setProfileError('');
+    try {
+      const body = await fetchChessComProfile(username);
+      const canonicalUsername = normalizeUsername(body.username || username);
+      setProfileData(body);
+      setDefaultChessUsername(canonicalUsername);
+      if (persist) localStorage.setItem(PROFILE_STORAGE_KEY, canonicalUsername);
+      const perspective = getPlayerPerspective(gameData, canonicalUsername);
+      if (perspective) setIsFlipped(perspective === 'black');
+      return body;
+    } catch (error) {
+      setProfileData(null);
+      setProfileError(error.message || 'Could not load Chess.com profile');
+      return null;
+    } finally {
+      setProfileLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    const saved = normalizeUsername(localStorage.getItem(PROFILE_STORAGE_KEY));
+    if (saved) loadChessProfile(saved, { persist: false });
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('chess_theme', theme);
-    const applyTheme = (t) => {
-      if (t === 'system') {
+    const applyTheme = (nextTheme) => {
+      if (nextTheme === 'system') {
         const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
       } else {
-        document.documentElement.setAttribute('data-theme', t);
+        document.documentElement.setAttribute('data-theme', nextTheme);
       }
     };
 
     applyTheme(theme);
-
     if (theme === 'system') {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       const handleChange = () => applyTheme('system');
       mediaQuery.addEventListener('change', handleChange);
       return () => mediaQuery.removeEventListener('change', handleChange);
     }
+    return undefined;
   }, [theme]);
 
   useEffect(() => { localStorage.setItem('chess_engineDepth', engineDepth); }, [engineDepth]);
@@ -64,54 +144,74 @@ function App() {
   useEffect(() => { localStorage.setItem('chess_numLines', numLines); }, [numLines]);
   useEffect(() => { localStorage.setItem('chess_threads', threads); }, [threads]);
 
-  // Global Arrow Key Navigation for Chess Moves
+  const handleGameLoaded = (data, sourceUrl) => {
+    const username = defaultChessUsername || profileData?.username || '';
+    const perspective = getPlayerPerspective(data, username);
+    if (perspective) setIsFlipped(perspective === 'black');
+    setGameData(data);
+    setCurrentGameUrl(sourceUrl || '');
+    setCurrentMoveIndex(0);
+    setBookmarks(readBookmarks(sourceUrl));
+  };
+
+  const toggleCurrentBookmark = () => {
+    if (!currentGameUrl || currentMoveIndex < 1) return;
+    setBookmarks((previous) => {
+      const next = toggleBookmark(previous, currentMoveIndex);
+      localStorage.setItem(bookmarkStorageKey(currentGameUrl), JSON.stringify(next));
+      return next;
+    });
+  };
+
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Don't capture keys if user is typing in an input or textarea
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
-        return;
-      }
+    const handleKeyDown = (event) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
       const maxMoves = gameData?.moves?.length || 0;
-      if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        setCurrentMoveIndex(prev => Math.max(0, prev - 1));
-      } else if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        setCurrentMoveIndex(prev => Math.min(maxMoves, prev + 1));
-      } else if (e.key === 'Home') {
-        e.preventDefault();
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        setCurrentMoveIndex((previous) => Math.max(0, previous - 1));
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        setCurrentMoveIndex((previous) => Math.min(maxMoves, previous + 1));
+      } else if (event.key === 'Home') {
+        event.preventDefault();
         setCurrentMoveIndex(0);
-      } else if (e.key === 'End') {
-        e.preventDefault();
+      } else if (event.key === 'End') {
+        event.preventDefault();
         setCurrentMoveIndex(maxMoves);
+      } else if (event.key.toLowerCase() === 'b' && currentMoveIndex > 0 && currentGameUrl) {
+        event.preventDefault();
+        toggleCurrentBookmark();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [gameData]);
+  }, [gameData, currentMoveIndex, currentGameUrl]);
 
   return (
     <div className="layout-container">
       <Sidebar onOpenSettings={() => setIsSettingsOpen(true)} />
       <div className="main-content">
-        <BoardArea 
-          gameData={gameData} 
-          currentMoveIndex={currentMoveIndex} 
+        <BoardArea
+          gameData={gameData}
+          currentMoveIndex={currentMoveIndex}
           isFlipped={isFlipped}
           boardTheme={boardTheme}
           showArrows={showArrows}
           showCoordinates={showCoordinates}
+          profileUsername={defaultChessUsername}
+          profileAvatar={profileData?.avatar || ''}
         />
-        <RightPanel 
-          gameData={gameData} 
-          setGameData={setGameData}
+        <RightPanel
+          gameData={gameData}
+          onGameLoaded={handleGameLoaded}
           currentMoveIndex={currentMoveIndex}
           setCurrentMoveIndex={setCurrentMoveIndex}
           engineDepth={engineDepth}
           onOpenSettings={() => setIsSettingsOpen(true)}
           isFlipped={isFlipped}
-          onToggleFlip={() => setIsFlipped(prev => !prev)}
+          onToggleFlip={() => setIsFlipped((previous) => !previous)}
           soundEnabled={soundEnabled}
           soundVolume={soundVolume}
           soundTheme={soundTheme}
@@ -121,10 +221,17 @@ function App() {
           maxTime={maxTime}
           numLines={numLines}
           threads={threads}
+          profileUsername={defaultChessUsername}
+          profileData={profileData}
+          profileLoading={profileLoading}
+          profileError={profileError}
+          onLoadProfile={loadChessProfile}
+          bookmarks={bookmarks}
+          onToggleBookmark={toggleCurrentBookmark}
         />
       </div>
-      <SettingsModal 
-        isOpen={isSettingsOpen} 
+      <SettingsModal
+        isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         theme={theme}
         setTheme={setTheme}
@@ -160,5 +267,3 @@ function App() {
 }
 
 export default App;
-
-
