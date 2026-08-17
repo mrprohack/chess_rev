@@ -33,7 +33,8 @@ frontend/
   src/CinematicMotion.css  Verdict, landing, review-row, story, bookmark, and reduced-motion animation layer
   src/components/BoardVerdictBadge.jsx Destination-anchored move classification badge
   src/components/LandingEffect.jsx Destination-square classification reaction overlay
-  src/components/ReviewMotionScope.jsx Shared review-motion context for panel descendants
+  src/components/ReviewMotionScope.jsx Review-motion provider wrapper for panel descendants
+  src/components/reviewMotionContext.js Review-motion context defaults and consumer hook
   src/components/GameHistory.jsx Latest-20 Chess.com history list and empty/error states
   src/components/RightPanel.jsx Review-only move analysis, source URL, playback, and hide control
   src/components/           Board, move story, profile loader, sidebar, settings, and history UI
