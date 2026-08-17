@@ -10,6 +10,7 @@ export default function BoardArea({
   showCoordinates = true,
   profileUsername = '',
   profileAvatar = '',
+  reviewMotion = { phase: 'settled', mode: 'settled', token: 0, isJump: false },
 }) {
   const whitePlayer = { name: gameData?.white || 'White', rating: gameData?.white_rating || '—', color: '#d4a843', side: 'white' };
   const blackPlayer = { name: gameData?.black || 'Black', rating: gameData?.black_rating || '—', color: '#5b7fa6', side: 'black' };
@@ -73,7 +74,20 @@ export default function BoardArea({
       {playerBar(topPlayer)}
       <div className="board-wrapper">
         <EvalBar score={currentScore} isFlipped={isFlipped} />
-        <ChessBoard fen={currentFen} bestMove={currentBestMove} playedMove={currentPlayedMove} classification={currentClassification} animationMove={animationMove} animationDirection={animationDirection} isFlipped={isFlipped} boardTheme={boardTheme} showArrows={showArrows} showCoordinates={showCoordinates} isJump={isJump} />
+        <ChessBoard
+          fen={currentFen}
+          bestMove={currentBestMove}
+          playedMove={currentPlayedMove}
+          classification={currentClassification}
+          animationMove={animationMove}
+          animationDirection={animationDirection}
+          isFlipped={isFlipped}
+          boardTheme={boardTheme}
+          showArrows={showArrows}
+          showCoordinates={showCoordinates}
+          isJump={isJump}
+          reviewMotion={reviewMotion}
+        />
       </div>
       {playerBar(bottomPlayer)}
     </div>
