@@ -6,6 +6,7 @@ import RightPanel from './components/RightPanel';
 import Sidebar from './components/Sidebar';
 import SettingsModal from './components/SettingsModal';
 import GameHistory from './components/GameHistory';
+import ReviewMotionScope from './components/ReviewMotionScope';
 import {
   bookmarkStorageKey,
   getPlayerPerspective,
@@ -295,31 +296,33 @@ function App() {
               reviewMotion={reviewMotion}
             />
             {isReviewPanelVisible ? (
-              <RightPanel
-                gameData={gameData}
-                onGameLoaded={handleGameLoaded}
-                currentMoveIndex={currentMoveIndex}
-                setCurrentMoveIndex={setCurrentMoveIndex}
-                engineDepth={engineDepth}
-                onOpenSettings={() => setIsSettingsOpen(true)}
-                isFlipped={isFlipped}
-                onToggleFlip={() => setIsFlipped((previous) => !previous)}
-                soundEnabled={soundEnabled}
-                soundVolume={soundVolume}
-                soundTheme={soundTheme}
-                autoPlaySpeed={autoPlaySpeed}
-                figurineNotation={figurineNotation}
-                chessEngine={chessEngine}
-                maxTime={maxTime}
-                numLines={numLines}
-                threads={threads}
-                bookmarks={bookmarks}
-                onToggleBookmark={toggleCurrentBookmark}
-                onHideReview={() => setIsReviewPanelVisible(false)}
-                requestedUrl={pendingHistoryGameUrl}
-                onRequestedUrlConsumed={() => setPendingHistoryGameUrl('')}
-                reviewMotion={reviewMotion}
-              />
+              <ReviewMotionScope reviewMotion={reviewMotion}>
+                <RightPanel
+                  gameData={gameData}
+                  onGameLoaded={handleGameLoaded}
+                  currentMoveIndex={currentMoveIndex}
+                  setCurrentMoveIndex={setCurrentMoveIndex}
+                  engineDepth={engineDepth}
+                  onOpenSettings={() => setIsSettingsOpen(true)}
+                  isFlipped={isFlipped}
+                  onToggleFlip={() => setIsFlipped((previous) => !previous)}
+                  soundEnabled={soundEnabled}
+                  soundVolume={soundVolume}
+                  soundTheme={soundTheme}
+                  autoPlaySpeed={autoPlaySpeed}
+                  figurineNotation={figurineNotation}
+                  chessEngine={chessEngine}
+                  maxTime={maxTime}
+                  numLines={numLines}
+                  threads={threads}
+                  bookmarks={bookmarks}
+                  onToggleBookmark={toggleCurrentBookmark}
+                  onHideReview={() => setIsReviewPanelVisible(false)}
+                  requestedUrl={pendingHistoryGameUrl}
+                  onRequestedUrlConsumed={() => setPendingHistoryGameUrl('')}
+                  reviewMotion={reviewMotion}
+                />
+              </ReviewMotionScope>
             ) : (
               <button
                 type="button"
