@@ -1,18 +1,5 @@
-import React, { createContext, useContext } from 'react';
-
-const DEFAULT_REVIEW_MOTION = Object.freeze({
-  phase: 'settled',
-  mode: 'settled',
-  token: 0,
-  delta: 0,
-  isJump: false,
-});
-
-const ReviewMotionContext = createContext(DEFAULT_REVIEW_MOTION);
-
-export function useReviewMotion() {
-  return useContext(ReviewMotionContext);
-}
+import React from 'react';
+import { DEFAULT_REVIEW_MOTION, ReviewMotionContext } from './reviewMotionContext';
 
 export default function ReviewMotionScope({ reviewMotion = DEFAULT_REVIEW_MOTION, children }) {
   const value = { ...DEFAULT_REVIEW_MOTION, ...reviewMotion };
