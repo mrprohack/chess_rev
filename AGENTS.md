@@ -29,11 +29,17 @@ backend/
   venv/                    Required local virtual environment (gitignored)
 
 frontend/
-  src/App.jsx              Application state, Review/History view state, saved profile, bookmarks, layout composition
+  src/App.jsx              Application state, Review/History view state, saved profile, bookmarks, layout composition, shared review-motion timeline
+  src/CinematicMotion.css  Verdict, landing, review-row, story, bookmark, and reduced-motion animation layer
+  src/components/BoardVerdictBadge.jsx Destination-anchored move classification badge
+  src/components/LandingEffect.jsx Destination-square classification reaction overlay
+  src/components/ReviewMotionScope.jsx Shared review-motion context for panel descendants
   src/components/GameHistory.jsx Latest-20 Chess.com history list and empty/error states
   src/components/RightPanel.jsx Review-only move analysis, source URL, playback, and hide control
   src/components/           Board, move story, profile loader, sidebar, settings, and history UI
   src/utils/boardMotion.js Deterministic UCI/FEN replay transitions for forward/backward animation
+  src/utils/reviewMotion.js Classification motion policy, timing, edge-safe verdict placement, and arrow reveal rules
+  src/utils/reviewMotionState.js One-ply/jump motion-state initialization helper
   src/utils/review.js      Profile perspective, history row formatting, key-move story, outcome, and bookmark helpers
   src/ReviewEnhancements.css Profile/replay/history/key-moment animation and responsive styles
   public/pieces_alt/       Active SVG piece set
@@ -112,6 +118,11 @@ When starting services, print both local URLs. The backend binds to `0.0.0.0:800
 - `ChessBoard.jsx` uses image-based pieces from `/pieces_alt/` and replay helpers from `src/utils/boardMotion.js`; preserve stable piece identity across animation changes.
 - One-ply replay should use the exact backend `played_move` UCI transition. FEN synchronization remains the fallback for jumps, initialization, and recovery.
 - Captures, castling, promotions, and one-ply backward replay must preserve deterministic piece identity and reduced-motion behavior.
+- Keep chess-piece movement in `boardMotion.js`; cinematic classification timing and placement belong in `reviewMotion.js`, `App.jsx`, and the focused board overlay components.
+- The review motion order is piece movement, landing reaction, destination-attached verdict, panel/move-row sync, then settled state. Corrective best-move arrows for negative classifications must not appear before the verdict stage.
+- Rapid jumps settle directly on the newest move, and stale animation timers must be cancelled.
+- Reduced-motion users must retain verdict/classification information while shake, bounce, landing bursts, and row sweeps are removed.
+- Bookmark micro-animation stays local to bookmark UI and must never replay the chess move.
 - Profile loading is read-only. Successful profile loads may persist the canonical username and orient reviewed games to that player's side.
 - Chess.com account/profile controls live in `SettingsModal`; `RightPanel.jsx` is review-only and must not duplicate account setup or the History list.
 - `GameHistory.jsx` renders at most the latest 20 normalized standard games and delegates refresh/selection back to `App.jsx`.
