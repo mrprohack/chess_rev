@@ -11,7 +11,7 @@ const chessBoardPath = path.join(componentsDir, 'ChessBoard.jsx');
 const boardAreaPath = path.join(componentsDir, 'BoardArea.jsx');
 const badgePath = path.join(componentsDir, 'BoardVerdictBadge.jsx');
 const landingPath = path.join(componentsDir, 'LandingEffect.jsx');
-const cssPath = path.join(srcDir, 'ReviewEnhancements.css');
+const cssPath = path.join(srcDir, 'CinematicMotion.css');
 
 const read = (filePath) => fs.readFileSync(filePath, 'utf8');
 
@@ -26,6 +26,7 @@ test('ChessBoard stages overlays and arrows from the shared review motion phase'
   assert.match(source, /LandingEffect/);
   assert.match(source, /getArrowReveal/);
   assert.match(source, /reviewMotion/);
+  assert.match(source, /CinematicMotion\.css/);
   assert.doesNotMatch(source, /board-moment-badge/);
 });
 
@@ -38,6 +39,7 @@ test('BoardArea forwards the shared review motion without replacing deterministi
 });
 
 test('cinematic board CSS includes verdict placement, landing effects, and distinct verdict motions', () => {
+  assert.equal(fs.existsSync(cssPath), true, 'CinematicMotion.css should exist');
   const css = read(cssPath);
   for (const token of [
     '.board-verdict',
