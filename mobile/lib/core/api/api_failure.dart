@@ -22,27 +22,33 @@ sealed class ApiFailure implements Exception {
 }
 
 final class InvalidGameUrlFailure extends ApiFailure {
-  const InvalidGameUrlFailure() : super('Enter a valid Chess.com or Lichess game URL.');
+  const InvalidGameUrlFailure()
+    : super('Enter a valid Chess.com or Lichess game URL.');
 }
 
 final class InvalidAnalysisRequestFailure extends ApiFailure {
-  const InvalidAnalysisRequestFailure() : super('The game could not be analyzed.');
+  const InvalidAnalysisRequestFailure()
+    : super('The game could not be analyzed.');
 }
 
 final class NotFoundFailure extends ApiFailure {
-  const NotFoundFailure() : super('The requested game or profile was not found.');
+  const NotFoundFailure()
+    : super('The requested game or profile was not found.');
 }
 
 final class RateLimitedFailure extends ApiFailure {
-  const RateLimitedFailure() : super('The chess provider is rate limiting requests. Try again shortly.');
+  const RateLimitedFailure()
+    : super('The chess provider is rate limiting requests. Try again shortly.');
 }
 
 final class ProviderUnavailableFailure extends ApiFailure {
-  const ProviderUnavailableFailure() : super('The chess provider is temporarily unavailable.');
+  const ProviderUnavailableFailure()
+    : super('The chess provider is temporarily unavailable.');
 }
 
 final class EngineUnavailableFailure extends ApiFailure {
-  const EngineUnavailableFailure() : super('The chess engine is temporarily unavailable.');
+  const EngineUnavailableFailure()
+    : super('The chess engine is temporarily unavailable.');
 }
 
 final class RequestTimedOutFailure extends ApiFailure {
@@ -50,7 +56,8 @@ final class RequestTimedOutFailure extends ApiFailure {
 }
 
 final class OfflineFailure extends ApiFailure {
-  const OfflineFailure() : super('You are offline. New analysis requires an internet connection.');
+  const OfflineFailure()
+    : super('You are offline. New analysis requires an internet connection.');
 }
 
 final class UnknownFailure extends ApiFailure {

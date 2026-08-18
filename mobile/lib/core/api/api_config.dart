@@ -9,7 +9,8 @@ class ApiConfig {
     bool releaseMode = kReleaseMode,
     String? configuredValue,
   }) {
-    final configured = configuredValue ??
+    final configured =
+        configuredValue ??
         const String.fromEnvironment('API_BASE_URL', defaultValue: '');
     final value = configured.trim();
 
@@ -27,7 +28,8 @@ class ApiConfig {
 
     if (releaseMode) {
       final host = uri.host.toLowerCase();
-      final isLocal = host == 'localhost' ||
+      final isLocal =
+          host == 'localhost' ||
           host == '127.0.0.1' ||
           host == '10.0.2.2' ||
           host == '0.0.0.0';

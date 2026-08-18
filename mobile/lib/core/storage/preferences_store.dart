@@ -10,7 +10,7 @@ abstract interface class PreferencesStore {
 
 class MemoryPreferencesStore implements PreferencesStore {
   MemoryPreferencesStore([AppSettings? initial])
-      : _settings = initial ?? AppSettings.defaults();
+    : _settings = initial ?? AppSettings.defaults();
 
   AppSettings _settings;
 
@@ -39,17 +39,22 @@ class SharedPreferencesStore implements PreferencesStore {
           preferences.getString('${_prefix}boardTheme') ?? defaults.boardTheme,
       showArrows:
           preferences.getBool('${_prefix}showArrows') ?? defaults.showArrows,
-      showCoordinates: preferences.getBool('${_prefix}showCoordinates') ??
+      showCoordinates:
+          preferences.getBool('${_prefix}showCoordinates') ??
           defaults.showCoordinates,
-      soundEnabled: preferences.getBool('${_prefix}soundEnabled') ??
+      soundEnabled:
+          preferences.getBool('${_prefix}soundEnabled') ??
           defaults.soundEnabled,
-      soundVolume: preferences.getDouble('${_prefix}soundVolume') ??
+      soundVolume:
+          preferences.getDouble('${_prefix}soundVolume') ??
           defaults.soundVolume,
       soundTheme:
           preferences.getString('${_prefix}soundTheme') ?? defaults.soundTheme,
-      autoPlaySpeedMs: preferences.getInt('${_prefix}autoPlaySpeedMs') ??
+      autoPlaySpeedMs:
+          preferences.getInt('${_prefix}autoPlaySpeedMs') ??
           defaults.autoPlaySpeedMs,
-      figurineNotation: preferences.getBool('${_prefix}figurineNotation') ??
+      figurineNotation:
+          preferences.getBool('${_prefix}figurineNotation') ??
           defaults.figurineNotation,
       engine: preferences.getString('${_prefix}engine') ?? defaults.engine,
       engineDepth:
@@ -57,9 +62,11 @@ class SharedPreferencesStore implements PreferencesStore {
       maxTime: preferences.getInt('${_prefix}maxTime') ?? defaults.maxTime,
       numLines: preferences.getInt('${_prefix}numLines') ?? defaults.numLines,
       threads: preferences.getInt('${_prefix}threads') ?? defaults.threads,
-      reduceMotion: preferences.getBool('${_prefix}reduceMotion') ??
+      reduceMotion:
+          preferences.getBool('${_prefix}reduceMotion') ??
           defaults.reduceMotion,
-      chessComUsername: preferences.getString('${_prefix}chessComUsername') ??
+      chessComUsername:
+          preferences.getString('${_prefix}chessComUsername') ??
           defaults.chessComUsername,
     );
   }

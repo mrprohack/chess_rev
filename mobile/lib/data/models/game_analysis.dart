@@ -118,7 +118,8 @@ Map<String, Map<String, int>> _decodeCounts(Object? value) {
 
 Map<String, dynamic> _asMap(Object? value, String label) {
   if (value is Map<String, dynamic>) return value;
-  if (value is Map) return value.map((key, item) => MapEntry(key.toString(), item));
+  if (value is Map)
+    return value.map((key, item) => MapEntry(key.toString(), item));
   throw FormatException('$label must be an object');
 }
 

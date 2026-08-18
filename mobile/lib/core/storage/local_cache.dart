@@ -37,11 +37,9 @@ class MemoryLocalCache implements LocalCache {
   }
 
   @override
-  Future<void> writeBookmarks(
-    String gameUrl,
-    Iterable<int> bookmarks,
-  ) async {
-    final values = bookmarks.where((value) => value > 0).toSet().toList()..sort();
+  Future<void> writeBookmarks(String gameUrl, Iterable<int> bookmarks) async {
+    final values = bookmarks.where((value) => value > 0).toSet().toList()
+      ..sort();
     _bookmarks[_key(gameUrl)] = values;
   }
 
@@ -107,13 +105,15 @@ class HiveLocalCache implements LocalCache {
   Future<List<int>> readBookmarks(String gameUrl) async {
     final raw = box.get('$_bookmarkPrefix${_key(gameUrl)}');
     if (raw is! List) return const [];
-    final values = raw.whereType<num>().map((value) => value.toInt()).toList()..sort();
+    final values = raw.whereType<num>().map((value) => value.toInt()).toList()
+      ..sort();
     return List.unmodifiable(values);
   }
 
   @override
   Future<void> writeBookmarks(String gameUrl, Iterable<int> bookmarks) {
-    final values = bookmarks.where((value) => value > 0).toSet().toList()..sort();
+    final values = bookmarks.where((value) => value > 0).toSet().toList()
+      ..sort();
     return box.put('$_bookmarkPrefix${_key(gameUrl)}', values);
   }
 
@@ -148,7 +148,9 @@ class HiveLocalCache implements LocalCache {
 
   @override
   Future<void> clearBookmarks() async {
-    final keys = box.keys.where((key) => key.toString().startsWith(_bookmarkPrefix));
+    final keys = box.keys.where(
+      (key) => key.toString().startsWith(_bookmarkPrefix),
+    );
     await box.deleteAll(keys);
   }
 

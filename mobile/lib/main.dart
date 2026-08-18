@@ -11,7 +11,9 @@ import 'features/settings/presentation/settings_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await SystemChrome.setPreferredOrientations(const [DeviceOrientation.portraitUp]);
+  await SystemChrome.setPreferredOrientations(const [
+    DeviceOrientation.portraitUp,
+  ]);
 
   final preferences = await SharedPreferences.getInstance();
   final preferencesStore = SharedPreferencesStore(preferences);

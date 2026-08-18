@@ -37,14 +37,14 @@ class ChessComProfile {
   }
 
   Map<String, dynamic> toJson() => {
-        'username': username,
-        'name': name,
-        'avatar': avatar,
-        'url': url,
-        'status': status,
-        'ratings': ratings.toJson(),
-        'games': games.map((game) => game.toJson()).toList(growable: false),
-      };
+    'username': username,
+    'name': name,
+    'avatar': avatar,
+    'url': url,
+    'status': status,
+    'ratings': ratings.toJson(),
+    'games': games.map((game) => game.toJson()).toList(growable: false),
+  };
 }
 
 class ChessComRatings {
@@ -63,10 +63,10 @@ class ChessComRatings {
   }
 
   Map<String, dynamic> toJson() => {
-        'rapid': rapid,
-        'blitz': blitz,
-        'bullet': bullet,
-      };
+    'rapid': rapid,
+    'blitz': blitz,
+    'bullet': bullet,
+  };
 }
 
 class RecentGame {
@@ -101,14 +101,14 @@ class RecentGame {
   }
 
   Map<String, dynamic> toJson() => {
-        'uuid': uuid,
-        'url': url,
-        'end_time': endTime,
-        'time_class': timeClass,
-        'rated': rated,
-        'white': white.toJson(),
-        'black': black.toJson(),
-      };
+    'uuid': uuid,
+    'url': url,
+    'end_time': endTime,
+    'time_class': timeClass,
+    'rated': rated,
+    'white': white.toJson(),
+    'black': black.toJson(),
+  };
 }
 
 class RecentPlayer {
@@ -127,15 +127,16 @@ class RecentPlayer {
   }
 
   Map<String, dynamic> toJson() => {
-        'username': username,
-        'rating': rating,
-        'result': result,
-      };
+    'username': username,
+    'rating': rating,
+    'result': result,
+  };
 }
 
 Map<String, dynamic> _asMap(Object? value) {
   if (value is Map<String, dynamic>) return value;
-  if (value is Map) return value.map((key, item) => MapEntry(key.toString(), item));
+  if (value is Map)
+    return value.map((key, item) => MapEntry(key.toString(), item));
   throw const FormatException('expected object');
 }
 

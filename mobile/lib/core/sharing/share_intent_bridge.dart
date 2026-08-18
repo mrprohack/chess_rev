@@ -15,6 +15,9 @@ class ShareIntentBridge {
   }
 
   Stream<String> get sharedTextStream {
-    return _eventChannel.receiveBroadcastStream().where((event) => event is String).cast<String>();
+    return _eventChannel
+        .receiveBroadcastStream()
+        .where((event) => event is String)
+        .cast<String>();
   }
 }

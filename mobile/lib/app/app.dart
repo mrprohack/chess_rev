@@ -29,7 +29,9 @@ class _ReviewChessAppState extends ConsumerState<ReviewChessApp> {
   void initState() {
     super.initState();
     if (widget.enablePlatformLinks) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _startIncomingLinks());
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _startIncomingLinks(),
+      );
     }
   }
 
@@ -44,7 +46,9 @@ class _ReviewChessAppState extends ConsumerState<ReviewChessApp> {
     const bridge = ShareIntentBridge();
     final initialText = await bridge.getInitialSharedText();
     if (initialText != null) await controller.handleSharedText(initialText);
-    _shareSubscription = bridge.sharedTextStream.listen(controller.handleSharedText);
+    _shareSubscription = bridge.sharedTextStream.listen(
+      controller.handleSharedText,
+    );
     _uriSubscription = AppLinks().uriLinkStream.listen(controller.handleUri);
   }
 

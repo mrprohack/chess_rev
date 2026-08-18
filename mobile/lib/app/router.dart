@@ -18,28 +18,20 @@ GoRouter createAppRouter() {
       ),
       GoRoute(
         path: '/history',
-        builder: (context, state) => const AppShell(
-          selectedIndex: 1,
-          child: HistoryScreen(),
-        ),
+        builder: (context, state) =>
+            const AppShell(selectedIndex: 1, child: HistoryScreen()),
       ),
       GoRoute(
         path: '/settings',
-        builder: (context, state) => const AppShell(
-          selectedIndex: 2,
-          child: SettingsScreen(),
-        ),
+        builder: (context, state) =>
+            const AppShell(selectedIndex: 2, child: SettingsScreen()),
       ),
     ],
   );
 }
 
 class AppShell extends StatelessWidget {
-  const AppShell({
-    required this.selectedIndex,
-    required this.child,
-    super.key,
-  });
+  const AppShell({required this.selectedIndex, required this.child, super.key});
 
   final int selectedIndex;
   final Widget child;
