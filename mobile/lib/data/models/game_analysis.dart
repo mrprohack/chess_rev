@@ -23,7 +23,9 @@ class GameAnalysis {
 
   factory GameAnalysis.fromJson(Map<String, dynamic> json) {
     final rawMoves = json['moves'];
-    if (rawMoves is! List) throw const FormatException('moves must be a list');
+    if (rawMoves is! List) {
+      throw const FormatException('moves must be a list');
+    }
     return GameAnalysis(
       white: _requiredString(json, 'white'),
       whiteRating: _optionalString(json['white_rating']),
@@ -69,7 +71,9 @@ class GameMove {
 
   factory GameMove.fromJson(Map<String, dynamic> json) {
     final number = _toInt(json['number']);
-    if (number == null) throw const FormatException('move number is required');
+    if (number == null) {
+      throw const FormatException('move number is required');
+    }
     return GameMove(
       number: number,
       color: _requiredString(json, 'color'),
@@ -102,14 +106,20 @@ class PlayerAccuracy {
 }
 
 Map<String, Map<String, int>> _decodeCounts(Object? value) {
-  if (value is! Map) return const {};
+  if (value is! Map) {
+    return const {};
+  }
   final result = <String, Map<String, int>>{};
   for (final entry in value.entries) {
-    if (entry.value is! Map) continue;
+    if (entry.value is! Map) {
+      continue;
+    }
     final inner = <String, int>{};
     for (final countEntry in (entry.value as Map).entries) {
       final count = _toInt(countEntry.value);
-      if (count != null) inner[countEntry.key.toString()] = count;
+      if (count != null) {
+        inner[countEntry.key.toString()] = count;
+      }
     }
     result[entry.key.toString()] = inner;
   }
@@ -117,31 +127,44 @@ Map<String, Map<String, int>> _decodeCounts(Object? value) {
 }
 
 Map<String, dynamic> _asMap(Object? value, String label) {
-  if (value is Map<String, dynamic>) return value;
-  if (value is Map)
+  if (value is Map<String, dynamic>) {
+    return value;
+  }
+  if (value is Map) {
     return value.map((key, item) => MapEntry(key.toString(), item));
+  }
   throw FormatException('$label must be an object');
 }
 
 String _requiredString(Map<String, dynamic> json, String key) {
   final value = json[key];
-  if (value is String && value.isNotEmpty) return value;
+  if (value is String && value.isNotEmpty) {
+    return value;
+  }
   throw FormatException('$key is required');
 }
 
 String? _optionalString(Object? value) {
-  if (value == null) return null;
+  if (value == null) {
+    return null;
+  }
   final string = value.toString();
   return string.isEmpty ? null : string;
 }
 
 int? _toInt(Object? value) {
-  if (value is int) return value;
-  if (value is num) return value.toInt();
+  if (value is int) {
+    return value;
+  }
+  if (value is num) {
+    return value.toInt();
+  }
   return int.tryParse(value?.toString() ?? '');
 }
 
 double? _toDouble(Object? value) {
-  if (value is num) return value.toDouble();
+  if (value is num) {
+    return value.toDouble();
+  }
   return double.tryParse(value?.toString() ?? '');
 }
