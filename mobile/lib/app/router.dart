@@ -1,29 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/history/presentation/history_screen.dart';
+import '../features/review/presentation/review_screen.dart';
+import '../features/settings/presentation/settings_screen.dart';
+
 GoRouter createAppRouter() {
   return GoRouter(
     initialLocation: '/review',
     routes: [
       GoRoute(
         path: '/review',
-        builder: (context, state) => const AppShell(
+        builder: (context, state) => AppShell(
           selectedIndex: 0,
-          child: _PlaceholderPage(title: 'Review'),
+          child: ReviewScreen(initialUrl: state.uri.queryParameters['url']),
         ),
       ),
       GoRoute(
         path: '/history',
         builder: (context, state) => const AppShell(
           selectedIndex: 1,
-          child: _PlaceholderPage(title: 'History'),
+          child: HistoryScreen(),
         ),
       ),
       GoRoute(
         path: '/settings',
         builder: (context, state) => const AppShell(
           selectedIndex: 2,
-          child: _PlaceholderPage(title: 'Settings'),
+          child: SettingsScreen(),
         ),
       ),
     ],
@@ -67,24 +71,6 @@ class AppShell extends StatelessWidget {
             label: 'Settings',
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _PlaceholderPage extends StatelessWidget {
-  const _PlaceholderPage({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Center(
-        child: Text(
-          title,
-          style: Theme.of(context).textTheme.headlineMedium,
-        ),
       ),
     );
   }

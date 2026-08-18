@@ -10,6 +10,7 @@ class ReviewState {
     this.sourceUrl = '',
     this.game,
     this.currentMoveIndex = 0,
+    this.previousMoveIndex = 0,
     this.boardFlipped = false,
     this.activeTab = ReviewTab.moves,
     this.autoplayRunning = false,
@@ -21,6 +22,7 @@ class ReviewState {
   final String sourceUrl;
   final GameAnalysis? game;
   final int currentMoveIndex;
+  final int previousMoveIndex;
   final bool boardFlipped;
   final ReviewTab activeTab;
   final bool autoplayRunning;
@@ -34,6 +36,7 @@ class ReviewState {
     String? sourceUrl,
     Object? game = _sentinel,
     int? currentMoveIndex,
+    int? previousMoveIndex,
     bool? boardFlipped,
     ReviewTab? activeTab,
     bool? autoplayRunning,
@@ -45,6 +48,7 @@ class ReviewState {
       sourceUrl: sourceUrl ?? this.sourceUrl,
       game: identical(game, _sentinel) ? this.game : game as GameAnalysis?,
       currentMoveIndex: currentMoveIndex ?? this.currentMoveIndex,
+      previousMoveIndex: previousMoveIndex ?? this.previousMoveIndex,
       boardFlipped: boardFlipped ?? this.boardFlipped,
       activeTab: activeTab ?? this.activeTab,
       autoplayRunning: autoplayRunning ?? this.autoplayRunning,

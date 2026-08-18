@@ -25,12 +25,12 @@ class ReviewController extends Notifier<ReviewState> {
   Future<void> analyzeUrl(String rawUrl) async {
     if (state.isLoading) return;
     final uri = Uri.tryParse(rawUrl.trim());
+    stopAutoplay();
     state = state.copyWith(
       loadingPhase: ReviewLoadingPhase.validating,
       error: null,
       autoplayRunning: false,
     );
-    stopAutoplay();
 
     if (uri == null || !isSupportedGameUri(uri)) {
       state = state.copyWith(
@@ -65,6 +65,7 @@ class ReviewController extends Notifier<ReviewState> {
       state = state.copyWith(
         game: game,
         currentMoveIndex: 0,
+        previousMoveIndex: 0,
         loadingPhase: ReviewLoadingPhase.idle,
         bookmarks: Set.unmodifiable(bookmarks),
         error: null,
@@ -83,19 +84,19 @@ class ReviewController extends Notifier<ReviewState> {
   }
 
   void firstMove() => _selectMove(0);
-
   void previousMove() => _selectMove(state.currentMoveIndex - 1);
-
   void nextMove() => _selectMove(state.currentMoveIndex + 1);
-
   void lastMove() => _selectMove(state.game?.moves.length ?? 0);
-
   void selectMove(int index) => _selectMove(index);
 
   void _selectMove(int requestedIndex) {
     final max = state.game?.moves.length ?? 0;
     final next = requestedIndex.clamp(0, max);
-    state = state.copyWith(currentMoveIndex: next);
+    if (next == state.currentMoveIndex) return;
+    state = state.copyWith(
+      previousMoveIndex: state.currentMoveIndex,
+      currentMoveIndex: next,
+    );
   }
 
   void toggleFlip() {
