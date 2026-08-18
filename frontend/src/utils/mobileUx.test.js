@@ -54,27 +54,27 @@ test('uses phone-friendly touch sizing for review actions and move rows', () => 
   assert.match(css, /\.move-col[^}]*min-height:\s*48px;/s);
 });
 
-test('fills the mobile review viewport and keeps playback inside the panel', () => {
+test('keeps the mobile review footer always visible at the viewport bottom', () => {
   const css = readMobileReviewCss();
   assert.match(
     css,
-    /\.layout-container\s*\{[^}]*padding-bottom:\s*0;/s,
-    'the page should not reserve fake space for a viewport-fixed playback dock',
-  );
-  assert.match(
-    css,
     /\.right-panel,\s*\.right-panel--motion\s*\{[^}]*height:\s*calc\(100dvh\s*-\s*54px\s*-\s*env\(safe-area-inset-top\)\);[^}]*min-height:\s*0;[^}]*max-height:\s*none;/s,
-    'the phone review panel should use the available viewport instead of stopping at 78dvh',
+    'the phone review panel should continue using the available viewport',
   );
   assert.match(
     css,
-    /\.panel-footer\s*\{[^}]*position:\s*sticky;[^}]*left:\s*auto;[^}]*bottom:\s*0;[^}]*transform:\s*none;[^}]*width:\s*100%;/s,
-    'playback should be an in-panel sticky footer rather than a viewport-fixed overlay',
+    /\.panel-footer\s*\{[^}]*position:\s*fixed;[^}]*left:\s*0;[^}]*right:\s*0;[^}]*bottom:\s*0;[^}]*width:\s*100%;/s,
+    'the mobile review footer should remain visible at the viewport bottom while content scrolls',
   );
   assert.match(
     css,
-    /\.moves-list\s*\{[^}]*min-height:\s*0;[^}]*padding-bottom:\s*[4-9]px;/s,
-    'the move list should flex-scroll naturally without a large fake footer reserve',
+    /\.panel-footer\s*\{[^}]*z-index:\s*(?:[4-9]\d|[1-9]\d{2,});/s,
+    'the always-visible footer should stay above the scrolling review content',
+  );
+  assert.match(
+    css,
+    /\.moves-list\s*\{[^}]*padding-bottom:\s*calc\(68px\s*\+\s*env\(safe-area-inset-bottom\)\);/s,
+    'the move list should reserve the fixed footer height so the last move is never covered',
   );
 });
 
