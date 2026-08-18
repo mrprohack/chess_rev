@@ -143,6 +143,9 @@ class ChessBoardView extends StatelessWidget {
       (_columnFor(destination) + 0.5) * squareSize,
       (_rowFor(destination) + 0.5) * squareSize,
     );
+    final arrowColor = Theme.of(context).colorScheme.primary.withValues(
+      alpha: 0.78,
+    );
 
     return Positioned.fill(
       key: const Key('best-move-arrow'),
@@ -151,7 +154,7 @@ class ChessBoardView extends StatelessWidget {
           painter: _BestMoveArrowPainter(
             source: sourceCenter,
             destination: destinationCenter,
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.78),
+            color: arrowColor,
             squareSize: squareSize,
           ),
         ),
@@ -221,7 +224,8 @@ class ChessBoardView extends StatelessWidget {
     );
   }
 
-  int _columnFor(BoardSquare square) => flipped ? 7 - square.file : square.file;
+  int _columnFor(BoardSquare square) =>
+      flipped ? 7 - square.file : square.file;
 
   int _rowFor(BoardSquare square) =>
       flipped ? square.rank - 1 : 8 - square.rank;
@@ -263,8 +267,8 @@ class _BestMoveArrowPainter extends CustomPainter {
     final strokeWidth = math.max(4.0, squareSize * 0.12);
     final headLength = math.max(10.0, squareSize * 0.28);
     final angle = math.atan2(delta.dy, delta.dx);
-    final shortenedEnd = destination -
-        Offset(math.cos(angle), math.sin(angle)) * (squareSize * 0.16);
+    final direction = Offset(math.cos(angle), math.sin(angle));
+    final shortenedEnd = destination - direction * (squareSize * 0.16);
 
     final paint = Paint()
       ..color = color
@@ -276,18 +280,16 @@ class _BestMoveArrowPainter extends CustomPainter {
     final headPaint = Paint()
       ..color = color
       ..style = PaintingStyle.fill;
-    final left = shortenedEnd -
-        Offset(
-          math.cos(angle - math.pi / 6),
-          math.sin(angle - math.pi / 6),
-        ) *
-            headLength;
-    final right = shortenedEnd -
-        Offset(
-          math.cos(angle + math.pi / 6),
-          math.sin(angle + math.pi / 6),
-        ) *
-            headLength;
+    final leftDirection = Offset(
+      math.cos(angle - math.pi / 6),
+      math.sin(angle - math.pi / 6),
+    );
+    final rightDirection = Offset(
+      math.cos(angle + math.pi / 6),
+      math.sin(angle + math.pi / 6),
+    );
+    final left = shortenedEnd - leftDirection * headLength;
+    final right = shortenedEnd - rightDirection * headLength;
     final path = Path()
       ..moveTo(shortenedEnd.dx, shortenedEnd.dy)
       ..lineTo(left.dx, left.dy)
