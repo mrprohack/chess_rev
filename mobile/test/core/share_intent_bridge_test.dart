@@ -15,9 +15,9 @@ void main() {
     MethodCall? captured;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (call) async {
-      captured = call;
-      return true;
-    });
+          captured = call;
+          return true;
+        });
 
     final shared = await const ShareIntentBridge().shareText(
       'https://lichess.org/abcdefgh',
