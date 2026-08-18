@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/sharing/share_intent_bridge.dart';
 import '../../board/domain/board_position.dart';
 import '../../board/presentation/chess_board_view.dart';
 import '../../settings/presentation/settings_controller.dart';
@@ -159,6 +160,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                                       move: currentMove,
                                       flipped: state.boardFlipped,
                                       showCoordinates: settings.showCoordinates,
+                                      showArrows: settings.showArrows,
                                       reduceMotion: settings.reduceMotion,
                                       boardTheme: settings.boardTheme,
                                     ),
@@ -190,6 +192,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                       bookmarked: state.bookmarks.contains(
                         state.currentMoveIndex,
                       ),
+                      figurineNotation: settings.figurineNotation,
                       onToggleBookmark: controller.toggleBookmark,
                     ),
                   SegmentedButton<ReviewTab>(
@@ -219,6 +222,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                         moves: game.moves,
                         currentMoveIndex: state.currentMoveIndex,
                         bookmarks: state.bookmarks,
+                        figurineNotation: settings.figurineNotation,
                         onSelectMove: controller.selectMove,
                         onToggleBookmark: controller.toggleBookmark,
                       ),
@@ -236,13 +240,18 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
             keyMoments: keyMoments,
             isPlaying: state.autoplayRunning,
             onShare: () async {
-              await Clipboard.setData(ClipboardData(text: state.sourceUrl));
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Game link copied to clipboard'),
-                  ),
-                );
+              final shared = await const ShareIntentBridge().shareText(
+                state.sourceUrl,
+              );
+              if (!shared) {
+                await Clipboard.setData(ClipboardData(text: state.sourceUrl));
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Game link copied to clipboard'),
+                    ),
+                  );
+                }
               }
             },
             onFirst: state.currentMoveIndex == 0 ? null : controller.firstMove,
