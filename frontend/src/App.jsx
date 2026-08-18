@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
 import './ReviewEnhancements.css';
 import BoardArea from './components/BoardArea';
@@ -6,12 +6,15 @@ import RightPanel from './components/RightPanel';
 import Sidebar from './components/Sidebar';
 import SettingsModal from './components/SettingsModal';
 import GameHistory from './components/GameHistory';
+import ReviewMotionScope from './components/ReviewMotionScope';
 import {
   bookmarkStorageKey,
   getPlayerPerspective,
   normalizeUsername,
   toggleBookmark,
 } from './utils/review';
+import { MOTION_TIMING } from './utils/reviewMotion';
+import { createMotionState } from './utils/reviewMotionState';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001';
 const PROFILE_STORAGE_KEY = 'chess_chesscom_username';
@@ -59,6 +62,15 @@ function App() {
   const [activeView, setActiveView] = useState('review');
   const [isReviewPanelVisible, setIsReviewPanelVisible] = useState(true);
   const [pendingHistoryGameUrl, setPendingHistoryGameUrl] = useState('');
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(
+    () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || false,
+  );
+  const previousMotionIndexRef = useRef(currentMoveIndex);
+  const motionTokenRef = useRef(0);
+  const [reviewMotion, setReviewMotion] = useState(() => ({
+    ...createMotionState({ moveIndex: 0, previousMoveIndex: 0, reducedMotion: prefersReducedMotion }),
+    token: 0,
+  }));
 
   const [defaultChessUsername, setDefaultChessUsername] = useState(
     () => normalizeUsername(localStorage.getItem(PROFILE_STORAGE_KEY)),
@@ -138,6 +150,40 @@ function App() {
     }
     return undefined;
   }, [theme]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    if (!mediaQuery) return undefined;
+    const handleChange = (event) => setPrefersReducedMotion(event.matches);
+    setPrefersReducedMotion(mediaQuery.matches);
+    mediaQuery.addEventListener?.('change', handleChange);
+    return () => mediaQuery.removeEventListener?.('change', handleChange);
+  }, []);
+
+  useEffect(() => {
+    const previousMoveIndex = previousMotionIndexRef.current;
+    previousMotionIndexRef.current = currentMoveIndex;
+    const token = motionTokenRef.current + 1;
+    motionTokenRef.current = token;
+    const initial = createMotionState({
+      moveIndex: currentMoveIndex,
+      previousMoveIndex,
+      reducedMotion: prefersReducedMotion,
+    });
+    setReviewMotion({ ...initial, token });
+    if (initial.mode !== 'animate') return undefined;
+
+    const setPhase = (phase) => {
+      setReviewMotion((current) => (current.token === token ? { ...current, phase } : current));
+    };
+    const timers = [
+      window.setTimeout(() => setPhase('landing'), MOTION_TIMING.landingAtMs),
+      window.setTimeout(() => setPhase('verdictReveal'), MOTION_TIMING.verdictAtMs),
+      window.setTimeout(() => setPhase('panelSync'), MOTION_TIMING.panelAtMs),
+      window.setTimeout(() => setPhase('settled'), MOTION_TIMING.settledAtMs),
+    ];
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [currentMoveIndex, prefersReducedMotion]);
 
   useEffect(() => { localStorage.setItem('chess_engineDepth', engineDepth); }, [engineDepth]);
   useEffect(() => { localStorage.setItem('chess_boardTheme', boardTheme); }, [boardTheme]);
@@ -246,33 +292,37 @@ function App() {
               showArrows={showArrows}
               showCoordinates={showCoordinates}
               profileUsername={defaultChessUsername}
-              profileAvatar={profileData?.avatar || ""}
+              profileAvatar={profileData?.avatar || ''}
+              reviewMotion={reviewMotion}
             />
             {isReviewPanelVisible ? (
-              <RightPanel
-                gameData={gameData}
-                onGameLoaded={handleGameLoaded}
-                currentMoveIndex={currentMoveIndex}
-                setCurrentMoveIndex={setCurrentMoveIndex}
-                engineDepth={engineDepth}
-                onOpenSettings={() => setIsSettingsOpen(true)}
-                isFlipped={isFlipped}
-                onToggleFlip={() => setIsFlipped((previous) => !previous)}
-                soundEnabled={soundEnabled}
-                soundVolume={soundVolume}
-                soundTheme={soundTheme}
-                autoPlaySpeed={autoPlaySpeed}
-                figurineNotation={figurineNotation}
-                chessEngine={chessEngine}
-                maxTime={maxTime}
-                numLines={numLines}
-                threads={threads}
-                bookmarks={bookmarks}
-                onToggleBookmark={toggleCurrentBookmark}
-                onHideReview={() => setIsReviewPanelVisible(false)}
-                requestedUrl={pendingHistoryGameUrl}
-                onRequestedUrlConsumed={() => setPendingHistoryGameUrl('')}
-              />
+              <ReviewMotionScope reviewMotion={reviewMotion}>
+                <RightPanel
+                  gameData={gameData}
+                  onGameLoaded={handleGameLoaded}
+                  currentMoveIndex={currentMoveIndex}
+                  setCurrentMoveIndex={setCurrentMoveIndex}
+                  engineDepth={engineDepth}
+                  onOpenSettings={() => setIsSettingsOpen(true)}
+                  isFlipped={isFlipped}
+                  onToggleFlip={() => setIsFlipped((previous) => !previous)}
+                  soundEnabled={soundEnabled}
+                  soundVolume={soundVolume}
+                  soundTheme={soundTheme}
+                  autoPlaySpeed={autoPlaySpeed}
+                  figurineNotation={figurineNotation}
+                  chessEngine={chessEngine}
+                  maxTime={maxTime}
+                  numLines={numLines}
+                  threads={threads}
+                  bookmarks={bookmarks}
+                  onToggleBookmark={toggleCurrentBookmark}
+                  onHideReview={() => setIsReviewPanelVisible(false)}
+                  requestedUrl={pendingHistoryGameUrl}
+                  onRequestedUrlConsumed={() => setPendingHistoryGameUrl('')}
+                  reviewMotion={reviewMotion}
+                />
+              </ReviewMotionScope>
             ) : (
               <button
                 type="button"
