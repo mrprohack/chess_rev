@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../data/models/game_analysis.dart';
 import '../../../board/presentation/classification_feedback.dart';
+import '../review_notation.dart';
 
 class MovesTab extends StatelessWidget {
   const MovesTab({
@@ -10,6 +11,7 @@ class MovesTab extends StatelessWidget {
     required this.bookmarks,
     required this.onSelectMove,
     required this.onToggleBookmark,
+    required this.figurineNotation,
     super.key,
   });
 
@@ -18,6 +20,7 @@ class MovesTab extends StatelessWidget {
   final Set<int> bookmarks;
   final ValueChanged<int> onSelectMove;
   final ValueChanged<int> onToggleBookmark;
+  final bool figurineNotation;
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +49,10 @@ class MovesTab extends StatelessWidget {
               ),
             ),
             title: Text(
-              move.notation,
+              displaySan(
+                move.notation,
+                figurineNotation: figurineNotation,
+              ),
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             subtitle: move.time == null ? null : Text(move.time!),
