@@ -107,96 +107,98 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       child: Column(
         children: [
           Expanded(
-            child: ListView(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-              children: [
-                PlayerBar(
-                  name: game.black,
-                  rating: game.blackRating,
-                  accuracy: game.accuracy?.black,
-                  isTop: true,
-                ),
-                Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 520),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        const evaluationWidth = 8.0;
-                        const gap = 5.0;
-                        final boardSize = constraints.maxWidth - evaluationWidth - gap;
-                        return SizedBox(
-                          height: boardSize,
-                          child: GestureDetector(
-                            onHorizontalDragEnd: (details) {
-                              final velocity = details.primaryVelocity ?? 0;
-                              if (velocity < -250) controller.nextMove();
-                              if (velocity > 250) controller.previousMove();
-                            },
-                            child: Row(
-                              children: [
-                                SizedBox.square(
-                                  dimension: boardSize,
-                                  child: ChessBoardView(
-                                    position: currentPosition,
-                                    previousPosition: previousPosition,
-                                    move: currentMove,
-                                    flipped: state.boardFlipped,
-                                    showCoordinates: settings.showCoordinates,
-                                    reduceMotion: settings.reduceMotion,
+              child: Column(
+                children: [
+                  PlayerBar(
+                    name: game.black,
+                    rating: game.blackRating,
+                    accuracy: game.accuracy?.black,
+                    isTop: true,
+                  ),
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 520),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          const evaluationWidth = 8.0;
+                          const gap = 5.0;
+                          final boardSize = constraints.maxWidth - evaluationWidth - gap;
+                          return SizedBox(
+                            height: boardSize,
+                            child: GestureDetector(
+                              onHorizontalDragEnd: (details) {
+                                final velocity = details.primaryVelocity ?? 0;
+                                if (velocity < -250) controller.nextMove();
+                                if (velocity > 250) controller.previousMove();
+                              },
+                              child: Row(
+                                children: [
+                                  SizedBox.square(
+                                    dimension: boardSize,
+                                    child: ChessBoardView(
+                                      position: currentPosition,
+                                      previousPosition: previousPosition,
+                                      move: currentMove,
+                                      flipped: state.boardFlipped,
+                                      showCoordinates: settings.showCoordinates,
+                                      reduceMotion: settings.reduceMotion,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: gap),
-                                SizedBox(
-                                  width: evaluationWidth,
-                                  height: boardSize,
-                                  child: EvaluationBar(
-                                    evaluation: currentMove?.evaluation,
+                                  const SizedBox(width: gap),
+                                  SizedBox(
+                                    width: evaluationWidth,
+                                    height: boardSize,
+                                    child: EvaluationBar(
+                                      evaluation: currentMove?.evaluation,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
                   ),
-                ),
-                PlayerBar(
-                  name: game.white,
-                  rating: game.whiteRating,
-                  accuracy: game.accuracy?.white,
-                ),
-                if (currentMove != null)
-                  MoveStoryCard(
-                    move: currentMove,
-                    bookmarked: state.bookmarks.contains(state.currentMoveIndex),
-                    onToggleBookmark: controller.toggleBookmark,
+                  PlayerBar(
+                    name: game.white,
+                    rating: game.whiteRating,
+                    accuracy: game.accuracy?.white,
                   ),
-                SegmentedButton<ReviewTab>(
-                  segments: const [
-                    ButtonSegment(value: ReviewTab.moves, label: Text('Moves')),
-                    ButtonSegment(value: ReviewTab.analysis, label: Text('Analysis')),
-                    ButtonSegment(value: ReviewTab.opening, label: Text('Opening')),
-                  ],
-                  selected: {state.activeTab},
-                  onSelectionChanged: (selection) => controller.setTab(selection.first),
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  height: 250,
-                  child: switch (state.activeTab) {
-                    ReviewTab.moves => MovesTab(
-                        moves: game.moves,
-                        currentMoveIndex: state.currentMoveIndex,
-                        bookmarks: state.bookmarks,
-                        onSelectMove: controller.selectMove,
-                        onToggleBookmark: controller.toggleBookmark,
-                      ),
-                    ReviewTab.analysis => AnalysisTab(game: game),
-                    ReviewTab.opening => const OpeningTab(),
-                  },
-                ),
-              ],
+                  if (currentMove != null)
+                    MoveStoryCard(
+                      move: currentMove,
+                      bookmarked: state.bookmarks.contains(state.currentMoveIndex),
+                      onToggleBookmark: controller.toggleBookmark,
+                    ),
+                  SegmentedButton<ReviewTab>(
+                    segments: const [
+                      ButtonSegment(value: ReviewTab.moves, label: Text('Moves')),
+                      ButtonSegment(value: ReviewTab.analysis, label: Text('Analysis')),
+                      ButtonSegment(value: ReviewTab.opening, label: Text('Opening')),
+                    ],
+                    selected: {state.activeTab},
+                    onSelectionChanged: (selection) => controller.setTab(selection.first),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 250,
+                    child: switch (state.activeTab) {
+                      ReviewTab.moves => MovesTab(
+                          moves: game.moves,
+                          currentMoveIndex: state.currentMoveIndex,
+                          bookmarks: state.bookmarks,
+                          onSelectMove: controller.selectMove,
+                          onToggleBookmark: controller.toggleBookmark,
+                        ),
+                      ReviewTab.analysis => AnalysisTab(game: game),
+                      ReviewTab.opening => const OpeningTab(),
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
           PlaybackDock(
