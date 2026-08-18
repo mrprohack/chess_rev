@@ -78,7 +78,7 @@ test('fills the mobile review viewport and keeps playback inside the panel', () 
   );
 });
 
-test('shows the complete seven-control playback row at the mobile bottom', () => {
+test('shows the complete controls block at the mobile bottom', () => {
   const css = readMobileReviewCss();
   assert.match(
     css,
