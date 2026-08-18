@@ -2,18 +2,21 @@ import 'package:flutter/material.dart';
 
 import '../../../../data/models/game_analysis.dart';
 import '../../../board/presentation/classification_feedback.dart';
+import '../review_notation.dart';
 
 class MoveStoryCard extends StatelessWidget {
   const MoveStoryCard({
     required this.move,
     required this.bookmarked,
     required this.onToggleBookmark,
+    required this.figurineNotation,
     super.key,
   });
 
   final GameMove move;
   final bool bookmarked;
   final VoidCallback onToggleBookmark;
+  final bool figurineNotation;
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +33,10 @@ class MoveStoryCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    move.notation,
+                    displaySan(
+                      move.notation,
+                      figurineNotation: figurineNotation,
+                    ),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
