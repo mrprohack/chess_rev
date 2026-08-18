@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import './App.css';
 import './ReviewEnhancements.css';
 import BoardArea from './components/BoardArea';
@@ -336,14 +336,9 @@ function App() {
           </>
         )}
       </div>
-<<<<<<< HEAD
-      <SettingsModal
-        isOpen={isSettingsOpen}
-=======
       <Suspense fallback={null}>
-        <SettingsModal 
-        isOpen={isSettingsOpen} 
->>>>>>> 85c1da056678962e716b190ec6d46210fd790775
+        <SettingsModal
+        isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         theme={theme}
         setTheme={setTheme}
@@ -373,17 +368,13 @@ function App() {
         setNumLines={setNumLines}
         threads={threads}
         setThreads={setThreads}
-<<<<<<< HEAD
         profileUsername={defaultChessUsername}
         profileData={profileData}
         profileLoading={profileLoading}
         profileError={profileError}
         onLoadProfile={loadChessProfile}
-      />
-=======
         />
       </Suspense>
->>>>>>> 85c1da056678962e716b190ec6d46210fd790775
     </div>
   );
 }
