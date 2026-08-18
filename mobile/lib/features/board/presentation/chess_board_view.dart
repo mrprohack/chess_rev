@@ -143,9 +143,9 @@ class ChessBoardView extends StatelessWidget {
       (_columnFor(destination) + 0.5) * squareSize,
       (_rowFor(destination) + 0.5) * squareSize,
     );
-    final arrowColor = Theme.of(context).colorScheme.primary.withValues(
-      alpha: 0.78,
-    );
+    final arrowColor = Theme.of(
+      context,
+    ).colorScheme.primary.withValues(alpha: 0.78);
 
     return Positioned.fill(
       key: const Key('best-move-arrow'),
@@ -224,8 +224,7 @@ class ChessBoardView extends StatelessWidget {
     );
   }
 
-  int _columnFor(BoardSquare square) =>
-      flipped ? 7 - square.file : square.file;
+  int _columnFor(BoardSquare square) => flipped ? 7 - square.file : square.file;
 
   int _rowFor(BoardSquare square) =>
       flipped ? square.rank - 1 : 8 - square.rank;
