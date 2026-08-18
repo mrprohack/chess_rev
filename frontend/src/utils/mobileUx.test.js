@@ -19,16 +19,25 @@ test('loads the mobile UX layer after the application module', () => {
   );
 });
 
-test('keeps the primary mobile navigation compact at the top with labels', () => {
+test('keeps a minimal three-action mobile navigation at the top', () => {
   const css = readMobileCss();
   assert.match(css, /@media\s*\(max-width:\s*900px\)/);
   assert.match(
     css,
-    /\.sidebar\s*\{[^}]*position:\s*fixed;[^}]*top:\s*0;[^}]*bottom:\s*auto;[^}]*height:\s*calc\(58px\s*\+\s*env\(safe-area-inset-top\)\);/s,
-    'mobile page navigation should stay in a compact top bar instead of competing with playback at the bottom',
+    /\.sidebar\s*\{[^}]*position:\s*fixed;[^}]*top:\s*0;[^}]*bottom:\s*auto;[^}]*height:\s*calc\(48px\s*\+\s*env\(safe-area-inset-top\)\);/s,
+    'the mobile page navigation should use a smaller 48px top bar',
+  );
+  assert.match(
+    css,
+    /\.sidebar-nav-list\s*\{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\);/s,
+    'mobile navigation should only reserve space for Review, History, and Settings',
+  );
+  assert.match(
+    css,
+    /\.sidebar-link\s*\{[^}]*display:\s*none;/s,
+    'the external Chess.com Play link should not be shown to mobile users',
   );
   assert.match(css, /\.sidebar-btn\s+span\s*\{[^}]*display:\s*(?:inline|block);/s);
-  assert.match(css, /\.sidebar-btn\s*\{[^}]*min-height:\s*44px;/s);
   assert.match(css, /safe-area-inset-top/);
 });
 
@@ -39,21 +48,21 @@ test('uses phone-friendly touch sizing for review actions and move rows', () => 
   assert.match(css, /\.move-col[^}]*min-height:\s*48px;/s);
 });
 
-test('keeps a compact move-control dock at the true bottom without covering moves', () => {
+test('keeps a slim move-control dock at the true bottom without covering moves', () => {
   const css = readMobileCss();
   assert.match(
     css,
-    /\.panel-footer\s*\{[^}]*position:\s*fixed;[^}]*left:\s*50%;[^}]*bottom:\s*env\(safe-area-inset-bottom\);[^}]*z-index:\s*280;/s,
-    'move controls should own the bottom thumb zone once page navigation moves to the top',
+    /\.panel-footer\s*\{[^}]*position:\s*fixed;[^}]*left:\s*50%;[^}]*bottom:\s*env\(safe-area-inset-bottom\);[^}]*min-height:\s*(?:5[8-9]|60)px;/s,
+    'move controls should use a slim 58-60px bottom dock',
   );
   assert.match(
     css,
-    /\.moves-list\s*\{[^}]*padding-bottom:\s*(?:8[0-9]|9[0-6])px;/s,
-    'the move list should reserve only the compact dock height instead of wasting vertical space',
+    /\.moves-list\s*\{[^}]*padding-bottom:\s*(?:7[2-9]|80)px;/s,
+    'the move list should reserve only enough space for the slimmer bottom dock',
   );
   assert.match(
     css,
-    /\.play-control\s*\{[^}]*min-width:\s*5[0-6]px;[^}]*min-height:\s*4[8-9]px;/s,
-    'play should remain the strongest playback target without making the dock unnecessarily tall',
+    /\.play-control\s*\{[^}]*min-width:\s*5[0-6]px;[^}]*min-height:\s*44px;/s,
+    'play should remain visually strongest while the dock stays compact',
   );
 });
