@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../data/models/game_analysis.dart';
 import '../domain/board_position.dart';
 import '../domain/move_transition.dart';
+import 'board_theme.dart';
 
 class ChessBoardView extends StatelessWidget {
   const ChessBoardView({
@@ -15,6 +16,7 @@ class ChessBoardView extends StatelessWidget {
     this.flipped = false,
     this.showCoordinates = true,
     this.reduceMotion = false,
+    this.boardTheme = 'wood',
     super.key,
   });
 
@@ -24,6 +26,7 @@ class ChessBoardView extends StatelessWidget {
   final bool flipped;
   final bool showCoordinates;
   final bool reduceMotion;
+  final String boardTheme;
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +36,7 @@ class ChessBoardView extends StatelessWidget {
       if (transition.type == MoveTransitionType.directJump) transition = null;
     }
 
+    final palette = boardPaletteFor(boardTheme);
     return AspectRatio(
       aspectRatio: 1,
       child: LayoutBuilder(
@@ -40,7 +44,7 @@ class ChessBoardView extends StatelessWidget {
           final boardSize = constraints.maxWidth;
           final squareSize = boardSize / 8;
           return TweenAnimationBuilder<double>(
-            key: ValueKey(move?.fen ?? '${position.pieces.length}-$flipped'),
+            key: ValueKey(move?.fen ?? '${position.pieces.length}-$flipped-$boardTheme'),
             tween: Tween(begin: 0, end: 1),
             duration: transition == null
                 ? Duration.zero
@@ -51,14 +55,10 @@ class ChessBoardView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
                 child: Stack(
                   children: [
-                    ..._buildSquares(context, squareSize),
+                    ..._buildSquares(squareSize, palette),
                     ..._buildTargetPieces(squareSize, transition, progress),
                     if (transition != null && progress < 1)
-                      _buildMovingPiece(
-                        squareSize,
-                        transition,
-                        progress,
-                      ),
+                      _buildMovingPiece(squareSize, transition, progress),
                   ],
                 ),
               );
@@ -69,7 +69,7 @@ class ChessBoardView extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildSquares(BuildContext context, double squareSize) {
+  List<Widget> _buildSquares(double squareSize, BoardPalette palette) {
     final widgets = <Widget>[];
     for (var rank = 1; rank <= 8; rank++) {
       for (var file = 0; file < 8; file++) {
@@ -77,9 +77,8 @@ class ChessBoardView extends StatelessWidget {
         final row = _rowFor(square);
         final column = _columnFor(square);
         final isLight = (file + rank).isOdd;
-        final color = isLight
-            ? const Color(0xFFEEEED2)
-            : const Color(0xFF769656);
+        final color = isLight ? palette.lightSquare : palette.darkSquare;
+        final labelColor = isLight ? palette.darkSquare : palette.lightSquare;
         widgets.add(
           Positioned(
             key: Key('square-${square.algebraic}'),
@@ -99,9 +98,7 @@ class ChessBoardView extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 8,
                             fontWeight: FontWeight.w700,
-                            color: isLight
-                                ? const Color(0xFF769656)
-                                : const Color(0xFFEEEED2),
+                            color: labelColor,
                           ),
                         ),
                       ),

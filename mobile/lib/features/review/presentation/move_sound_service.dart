@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 
 import '../../../data/models/app_settings.dart';
@@ -17,31 +18,41 @@ MoveSoundKind soundKindForMove(GameMove move) {
   return MoveSoundKind.move;
 }
 
-class MoveSoundService {
+String soundAssetPath(GameMove move, String soundTheme) {
+  const supportedThemes = {'classic', 'soft', 'minimal'};
+  final theme = supportedThemes.contains(soundTheme) ? soundTheme : 'classic';
+  final name = switch (soundKindForMove(move)) {
+    MoveSoundKind.move => 'move',
+    MoveSoundKind.capture => 'capture',
+    MoveSoundKind.check => 'check',
+    MoveSoundKind.castle => 'castle',
+    MoveSoundKind.promotion => 'promotion',
+    MoveSoundKind.gameEnd => 'game_end',
+  };
+  return 'assets/sounds/$theme/$name.wav';
+}
+
+abstract interface class MoveSoundPlayer {
+  void play(GameMove? move, AppSettings settings);
+}
+
+class MoveSoundService implements MoveSoundPlayer {
   MoveSoundService([AudioPlayer? player]) : _player = player ?? AudioPlayer();
 
   final AudioPlayer _player;
 
+  @override
   void play(GameMove? move, AppSettings settings) {
     if (move == null || !settings.soundEnabled || settings.soundVolume <= 0) {
       return;
     }
-    unawaited(_play(move, settings.soundVolume));
+    unawaited(_play(move, settings));
   }
 
-  Future<void> _play(GameMove move, double volume) async {
-    final kind = soundKindForMove(move);
-    final name = switch (kind) {
-      MoveSoundKind.move => 'move',
-      MoveSoundKind.capture => 'capture',
-      MoveSoundKind.check => 'check',
-      MoveSoundKind.castle => 'castle',
-      MoveSoundKind.promotion => 'promotion',
-      MoveSoundKind.gameEnd => 'game_end',
-    };
+  Future<void> _play(GameMove move, AppSettings settings) async {
     try {
-      await _player.setVolume(volume.clamp(0, 1));
-      await _player.setAsset('assets/sounds/$name.wav');
+      await _player.setVolume(settings.soundVolume.clamp(0, 1));
+      await _player.setAsset(soundAssetPath(move, settings.soundTheme));
       await _player.seek(Duration.zero);
       await _player.play();
     } catch (_) {
@@ -51,3 +62,9 @@ class MoveSoundService {
 
   Future<void> dispose() => _player.dispose();
 }
+
+final moveSoundPlayerProvider = Provider<MoveSoundPlayer>((ref) {
+  final service = MoveSoundService();
+  ref.onDispose(() => unawaited(service.dispose()));
+  return service;
+});

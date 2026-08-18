@@ -106,6 +106,22 @@ class SettingsScreen extends ConsumerWidget {
                   divisions: 14,
                   onChanged: (value) => controller.setMaxTime(value.round()),
                 ),
+                _SliderSetting(
+                  label: 'Lines',
+                  value: settings.numLines.toDouble(),
+                  min: 1,
+                  max: 5,
+                  divisions: 4,
+                  onChanged: (value) => controller.setNumLines(value.round()),
+                ),
+                _SliderSetting(
+                  label: 'Threads',
+                  value: settings.threads.toDouble(),
+                  min: 1,
+                  max: 8,
+                  divisions: 7,
+                  onChanged: (value) => controller.setThreads(value.round()),
+                ),
               ],
             ),
             SettingsSection(
@@ -123,6 +139,20 @@ class SettingsScreen extends ConsumerWidget {
                   max: 1,
                   divisions: 10,
                   onChanged: controller.setSoundVolume,
+                ),
+                ListTile(
+                  title: const Text('Sound theme'),
+                  trailing: DropdownButton<String>(
+                    value: settings.soundTheme,
+                    items: const [
+                      DropdownMenuItem(value: 'classic', child: Text('Classic')),
+                      DropdownMenuItem(value: 'soft', child: Text('Soft')),
+                      DropdownMenuItem(value: 'minimal', child: Text('Minimal')),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) controller.setSoundTheme(value);
+                    },
+                  ),
                 ),
                 _SliderSetting(
                   label: 'Autoplay speed',

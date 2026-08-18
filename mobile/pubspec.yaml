@@ -30,5 +30,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/pieces/
-    - assets/sounds/
+    - assets/sounds/classic/
+    - assets/sounds/soft/
+    - assets/sounds/minimal/
     - test/fixtures/
