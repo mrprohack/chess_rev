@@ -78,17 +78,22 @@ test('fills the mobile review viewport and keeps playback inside the panel', () 
   );
 });
 
-test('uses one balanced six-control playback row on mobile', () => {
+test('shows the complete seven-control playback row at the mobile bottom', () => {
   const css = readMobileReviewCss();
   assert.match(
     css,
-    /\.controls\s*\{[^}]*grid-template-columns:\s*repeat\(6,\s*minmax\(0,\s*1fr\)\);/s,
-    'First, Previous, Play, Next, Last, and Flip should share one balanced row',
+    /\.controls\s*\{[^}]*grid-template-columns:\s*repeat\(7,\s*minmax\(0,\s*1fr\)\);/s,
+    'Share, First, Previous, Play, Next, Last, and Flip should share one balanced mobile row',
   );
   assert.match(
     css,
     /\.controls-main\s*\{[^}]*display:\s*contents;/s,
-    'the nested playback group should participate in the six-column mobile grid',
+    'the nested playback group should participate directly in the seven-column mobile grid',
+  );
+  assert.match(
+    css,
+    /\.controls\s*>\s*\.control-btn:first-child\s*\{[^}]*display:\s*flex;/s,
+    'the Share action should remain visible in the mobile bottom controls',
   );
   assert.match(
     css,
@@ -98,6 +103,6 @@ test('uses one balanced six-control playback row on mobile', () => {
   assert.match(
     css,
     /\.play-control\s*\{[^}]*min-width:\s*44px;[^}]*min-height:\s*44px;/s,
-    'play should remain touch-safe while fitting the balanced row',
+    'play should remain touch-safe while fitting the complete row',
   );
 });
