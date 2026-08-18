@@ -120,16 +120,9 @@ def parse_game_url(raw_url: str) -> tuple[str, str]:
     if parsed.scheme not in {"http", "https"}:
         raise HTTPException(status_code=400, detail="Invalid game URL")
     if host == "lichess.org" or host.endswith(".lichess.org"):
-        if not parts:
-            raise HTTPException(status_code=400, detail="Could not extract Lichess game ID")
-        return "lichess", parts[0]
+        return _extract_lichess_game_id(parts)
     if host == "chess.com" or host.endswith(".chess.com"):
-        for game_type in ("live", "daily"):
-            if game_type in parts:
-                index = parts.index(game_type) + 1
-                if index < len(parts):
-                    return "chess.com", parts[index]
-        raise HTTPException(status_code=400, detail="Could not extract Chess.com game ID")
+        return _extract_chess_com_game_id(parts)
     raise HTTPException(status_code=400, detail="Invalid URL. Must be chess.com or lichess.org")
 
 
@@ -379,4 +372,3 @@ def analyze_game(req: AnalyzeRequest):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", "8001")))
-
