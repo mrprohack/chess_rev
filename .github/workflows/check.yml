@@ -73,12 +73,12 @@ jobs:
           cache: true
       - name: Install Flutter dependencies
         run: flutter pub get
-      - name: Format check
-        run: dart format --output=none --set-exit-if-changed .
       - name: Analyze
         run: flutter analyze
       - name: Tests
         run: flutter test
+      - name: Format check
+        run: dart format --output=none --set-exit-if-changed .
       - name: Bootstrap Android platform
         run: bash tool/bootstrap_android.sh
       - name: Build debug APK
