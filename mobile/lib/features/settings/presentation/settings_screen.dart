@@ -23,8 +23,8 @@ class SettingsScreen extends ConsumerWidget {
                 child: Text(
                   'Settings',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ),
@@ -80,10 +80,19 @@ class SettingsScreen extends ConsumerWidget {
                   trailing: DropdownButton<String>(
                     value: settings.engine,
                     items: const [
-                      DropdownMenuItem(value: 'stockfish18', child: Text('Stockfish 18')),
-                      DropdownMenuItem(value: 'stockfish18lite', child: Text('Stockfish 18 Lite')),
+                      DropdownMenuItem(
+                        value: 'stockfish18',
+                        child: Text('Stockfish 18'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'stockfish18lite',
+                        child: Text('Stockfish 18 Lite'),
+                      ),
                       DropdownMenuItem(value: 'torch4', child: Text('Torch 4')),
-                      DropdownMenuItem(value: 'torch4lite', child: Text('Torch 4 Lite')),
+                      DropdownMenuItem(
+                        value: 'torch4lite',
+                        child: Text('Torch 4 Lite'),
+                      ),
                     ],
                     onChanged: (value) {
                       if (value != null) controller.setEngine(value);
@@ -96,7 +105,8 @@ class SettingsScreen extends ConsumerWidget {
                   min: 6,
                   max: 24,
                   divisions: 18,
-                  onChanged: (value) => controller.setEngineDepth(value.round()),
+                  onChanged: (value) =>
+                      controller.setEngineDepth(value.round()),
                 ),
                 _SliderSetting(
                   label: 'Maximum time',
@@ -145,9 +155,15 @@ class SettingsScreen extends ConsumerWidget {
                   trailing: DropdownButton<String>(
                     value: settings.soundTheme,
                     items: const [
-                      DropdownMenuItem(value: 'classic', child: Text('Classic')),
+                      DropdownMenuItem(
+                        value: 'classic',
+                        child: Text('Classic'),
+                      ),
                       DropdownMenuItem(value: 'soft', child: Text('Soft')),
-                      DropdownMenuItem(value: 'minimal', child: Text('Minimal')),
+                      DropdownMenuItem(
+                        value: 'minimal',
+                        child: Text('Minimal'),
+                      ),
                     ],
                     onChanged: (value) {
                       if (value != null) controller.setSoundTheme(value);
@@ -160,7 +176,8 @@ class SettingsScreen extends ConsumerWidget {
                   min: 400,
                   max: 2000,
                   divisions: 8,
-                  onChanged: (value) => controller.setAutoPlaySpeed(value.round()),
+                  onChanged: (value) =>
+                      controller.setAutoPlaySpeed(value.round()),
                 ),
                 SwitchListTile(
                   title: const Text('Figurine notation'),
@@ -296,7 +313,9 @@ class _SliderSetting extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text('$label: ${value.toStringAsFixed(value % 1 == 0 ? 0 : 1)}'),
+          child: Text(
+            '$label: ${value.toStringAsFixed(value % 1 == 0 ? 0 : 1)}',
+          ),
         ),
         Slider(
           value: value.clamp(min, max),

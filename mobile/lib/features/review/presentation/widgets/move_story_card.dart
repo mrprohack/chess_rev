@@ -32,8 +32,8 @@ class MoveStoryCard extends StatelessWidget {
                   Text(
                     move.notation,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   if (move.evaluation != null)
                     Text('Evaluation ${move.evaluation!.toStringAsFixed(2)}'),

@@ -19,7 +19,9 @@ class ProfileHeader extends StatelessWidget {
             CircleAvatar(
               radius: 28,
               backgroundImage: avatar == null ? null : NetworkImage(avatar),
-              child: avatar == null ? Text(profile.username[0].toUpperCase()) : null,
+              child: avatar == null
+                  ? Text(profile.username[0].toUpperCase())
+                  : null,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -29,8 +31,8 @@ class ProfileHeader extends StatelessWidget {
                   Text(
                     profile.username,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Wrap(

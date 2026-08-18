@@ -79,7 +79,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
           else if (profile == null)
             SliverFillRemaining(
               child: Center(
-                child: Text(state.error?.message ?? 'No profile data available.'),
+                child: Text(
+                  state.error?.message ?? 'No profile data available.',
+                ),
               ),
             )
           else ...[

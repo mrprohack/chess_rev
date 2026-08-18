@@ -18,8 +18,7 @@ import 'widgets/playback_dock.dart';
 import 'widgets/player_bar.dart';
 import 'widgets/review_empty_state.dart';
 
-const _startingFen =
-    'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+const _startingFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
 class ReviewScreen extends ConsumerStatefulWidget {
   const ReviewScreen({this.initialUrl, super.key});
@@ -39,7 +38,9 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     _urlController = TextEditingController(text: widget.initialUrl ?? '');
     if ((widget.initialUrl ?? '').isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(reviewControllerProvider.notifier).analyzeUrl(widget.initialUrl!);
+        ref
+            .read(reviewControllerProvider.notifier)
+            .analyzeUrl(widget.initialUrl!);
       });
     }
   }
@@ -62,10 +63,9 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         final review = ref.read(reviewControllerProvider);
         final game = review.game;
         if (game == null || next > game.moves.length) return;
-        ref.read(moveSoundPlayerProvider).play(
-              game.moves[next - 1],
-              ref.read(settingsProvider),
-            );
+        ref
+            .read(moveSoundPlayerProvider)
+            .play(game.moves[next - 1], ref.read(settingsProvider));
       },
     );
 
@@ -115,7 +115,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       previousPosition = BoardPosition.fromFen(previousFen);
     }
     final settings = ref.watch(settingsProvider);
-    final keyMoments = game.moves.where(_isKeyMoment).length + state.bookmarks.length;
+    final keyMoments =
+        game.moves.where(_isKeyMoment).length + state.bookmarks.length;
 
     return SafeArea(
       child: Column(
@@ -138,7 +139,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                         builder: (context, constraints) {
                           const evaluationWidth = 8.0;
                           const gap = 5.0;
-                          final boardSize = constraints.maxWidth - evaluationWidth - gap;
+                          final boardSize =
+                              constraints.maxWidth - evaluationWidth - gap;
                           return SizedBox(
                             height: boardSize,
                             child: GestureDetector(
@@ -185,29 +187,41 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                   if (currentMove != null)
                     MoveStoryCard(
                       move: currentMove,
-                      bookmarked: state.bookmarks.contains(state.currentMoveIndex),
+                      bookmarked: state.bookmarks.contains(
+                        state.currentMoveIndex,
+                      ),
                       onToggleBookmark: controller.toggleBookmark,
                     ),
                   SegmentedButton<ReviewTab>(
                     segments: const [
-                      ButtonSegment(value: ReviewTab.moves, label: Text('Moves')),
-                      ButtonSegment(value: ReviewTab.analysis, label: Text('Analysis')),
-                      ButtonSegment(value: ReviewTab.opening, label: Text('Opening')),
+                      ButtonSegment(
+                        value: ReviewTab.moves,
+                        label: Text('Moves'),
+                      ),
+                      ButtonSegment(
+                        value: ReviewTab.analysis,
+                        label: Text('Analysis'),
+                      ),
+                      ButtonSegment(
+                        value: ReviewTab.opening,
+                        label: Text('Opening'),
+                      ),
                     ],
                     selected: {state.activeTab},
-                    onSelectionChanged: (selection) => controller.setTab(selection.first),
+                    onSelectionChanged: (selection) =>
+                        controller.setTab(selection.first),
                   ),
                   const SizedBox(height: 8),
                   SizedBox(
                     height: 250,
                     child: switch (state.activeTab) {
                       ReviewTab.moves => MovesTab(
-                          moves: game.moves,
-                          currentMoveIndex: state.currentMoveIndex,
-                          bookmarks: state.bookmarks,
-                          onSelectMove: controller.selectMove,
-                          onToggleBookmark: controller.toggleBookmark,
-                        ),
+                        moves: game.moves,
+                        currentMoveIndex: state.currentMoveIndex,
+                        bookmarks: state.bookmarks,
+                        onSelectMove: controller.selectMove,
+                        onToggleBookmark: controller.toggleBookmark,
+                      ),
                       ReviewTab.analysis => AnalysisTab(game: game),
                       ReviewTab.opening => const OpeningTab(),
                     },
@@ -225,13 +239,16 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
               await Clipboard.setData(ClipboardData(text: state.sourceUrl));
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Game link copied to clipboard')),
+                  const SnackBar(
+                    content: Text('Game link copied to clipboard'),
+                  ),
                 );
               }
             },
             onFirst: state.currentMoveIndex == 0 ? null : controller.firstMove,
-            onPrevious:
-                state.currentMoveIndex == 0 ? null : controller.previousMove,
+            onPrevious: state.currentMoveIndex == 0
+                ? null
+                : controller.previousMove,
             onPlayPause: controller.toggleAutoplay,
             onNext: state.currentMoveIndex >= game.moves.length
                 ? null
@@ -249,5 +266,11 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
 
 bool _isKeyMoment(dynamic move) {
   final value = move.classification.toString().toLowerCase();
-  return const {'brilliant', 'great', 'mistake', 'miss', 'blunder'}.contains(value);
+  return const {
+    'brilliant',
+    'great',
+    'mistake',
+    'miss',
+    'blunder',
+  }.contains(value);
 }

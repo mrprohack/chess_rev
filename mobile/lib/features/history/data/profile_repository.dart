@@ -15,7 +15,10 @@ class DioProfileRepository implements ProfileRepository {
   final Dio dio;
 
   @override
-  Future<ChessComProfile> fetchProfile(String username, {int limit = 12}) async {
+  Future<ChessComProfile> fetchProfile(
+    String username, {
+    int limit = 12,
+  }) async {
     final cleaned = username.trim();
     if (cleaned.isEmpty) throw const InvalidAnalysisRequestFailure();
     final safeLimit = limit.clamp(1, 20);
@@ -34,7 +37,8 @@ class DioProfileRepository implements ProfileRepository {
       } on ApiFailure {
         rethrow;
       } on DioException catch (error) {
-        final transient = error.type == DioExceptionType.connectionError ||
+        final transient =
+            error.type == DioExceptionType.connectionError ||
             error.type == DioExceptionType.connectionTimeout ||
             error.type == DioExceptionType.receiveTimeout ||
             error.type == DioExceptionType.sendTimeout;

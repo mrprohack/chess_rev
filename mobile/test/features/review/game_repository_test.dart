@@ -9,7 +9,9 @@ import '../../support/stub_http_adapter.dart';
 
 void main() {
   test('posts exact analysis request and decodes response', () async {
-    final fixture = File('test/fixtures/chesscom_analysis.json').readAsStringSync();
+    final fixture = File(
+      'test/fixtures/chesscom_analysis.json',
+    ).readAsStringSync();
     RequestOptions? captured;
     final dio = Dio(BaseOptions(baseUrl: 'https://api.reviewchess.in'));
     dio.httpClientAdapter = StubHttpAdapter((options) {
@@ -17,7 +19,9 @@ void main() {
       return ResponseBody.fromString(
         fixture,
         200,
-        headers: {Headers.contentTypeHeader: [Headers.jsonContentType]},
+        headers: {
+          Headers.contentTypeHeader: [Headers.jsonContentType],
+        },
       );
     });
     final repository = DioGameRepository(dio);

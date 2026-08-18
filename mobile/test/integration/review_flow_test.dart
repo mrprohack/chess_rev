@@ -16,36 +16,41 @@ class IntegrationGameRepository implements GameRepository {
 }
 
 void main() {
-  testWidgets('deep-link style initial URL loads review and playback advances', (tester) async {
-    final cache = MemoryLocalCache();
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          gameRepositoryProvider.overrideWithValue(IntegrationGameRepository()),
-          localCacheProvider.overrideWithValue(cache),
-        ],
-        child: const MaterialApp(
-          home: ReviewScreen(
-            initialUrl: 'https://www.chess.com/game/170804338698',
+  testWidgets(
+    'deep-link style initial URL loads review and playback advances',
+    (tester) async {
+      final cache = MemoryLocalCache();
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            gameRepositoryProvider.overrideWithValue(
+              IntegrationGameRepository(),
+            ),
+            localCacheProvider.overrideWithValue(cache),
+          ],
+          child: const MaterialApp(
+            home: ReviewScreen(
+              initialUrl: 'https://www.chess.com/game/170804338698',
+            ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.byType(ChessBoardView), findsOneWidget);
-    expect(find.text('Alpha'), findsWidgets);
-    expect(find.bySemanticsLabel('Next'), findsOneWidget);
+      expect(find.byType(ChessBoardView), findsOneWidget);
+      expect(find.text('Alpha'), findsWidgets);
+      expect(find.bySemanticsLabel('Next'), findsOneWidget);
 
-    await tester.tap(find.bySemanticsLabel('Next'));
-    await tester.pumpAndSettle();
-    expect(find.text('e4'), findsWidgets);
+      await tester.tap(find.bySemanticsLabel('Next'));
+      await tester.pumpAndSettle();
+      expect(find.text('e4'), findsWidgets);
 
-    await tester.tap(find.bySemanticsLabel('Flip'));
-    await tester.pump();
-    expect(find.byType(ChessBoardView), findsOneWidget);
-    expect(await cache.readRecentUrls(), [
-      'https://www.chess.com/game/170804338698',
-    ]);
-  });
+      await tester.tap(find.bySemanticsLabel('Flip'));
+      await tester.pump();
+      expect(find.byType(ChessBoardView), findsOneWidget);
+      expect(await cache.readRecentUrls(), [
+        'https://www.chess.com/game/170804338698',
+      ]);
+    },
+  );
 }

@@ -48,17 +48,37 @@ class PlaybackDock extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _DockAction(label: 'Share', icon: Icons.share_outlined, onPressed: onShare),
-                _DockAction(label: 'First', icon: Icons.first_page, onPressed: onFirst),
-                _DockAction(label: 'Previous', icon: Icons.chevron_left, onPressed: onPrevious),
+                _DockAction(
+                  label: 'Share',
+                  icon: Icons.share_outlined,
+                  onPressed: onShare,
+                ),
+                _DockAction(
+                  label: 'First',
+                  icon: Icons.first_page,
+                  onPressed: onFirst,
+                ),
+                _DockAction(
+                  label: 'Previous',
+                  icon: Icons.chevron_left,
+                  onPressed: onPrevious,
+                ),
                 _DockAction(
                   label: isPlaying ? 'Pause' : 'Play',
                   icon: isPlaying ? Icons.pause : Icons.play_arrow,
                   onPressed: onPlayPause,
                   emphasized: true,
                 ),
-                _DockAction(label: 'Next', icon: Icons.chevron_right, onPressed: onNext),
-                _DockAction(label: 'Last', icon: Icons.last_page, onPressed: onLast),
+                _DockAction(
+                  label: 'Next',
+                  icon: Icons.chevron_right,
+                  onPressed: onNext,
+                ),
+                _DockAction(
+                  label: 'Last',
+                  icon: Icons.last_page,
+                  onPressed: onLast,
+                ),
                 _DockAction(label: 'Flip', icon: Icons.flip, onPressed: onFlip),
               ],
             ),

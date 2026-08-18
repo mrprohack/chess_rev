@@ -3,12 +3,12 @@ import 'package:reviewchess/data/models/game_analysis.dart';
 import 'package:reviewchess/features/review/presentation/move_sound_service.dart';
 
 GameMove move(String san) => GameMove(
-      number: 1,
-      color: 'white',
-      notation: san,
-      classification: 'Good',
-      fen: '8/8/8/8/8/8/8/4K3 w - - 0 1',
-    );
+  number: 1,
+  color: 'white',
+  notation: san,
+  classification: 'Good',
+  fen: '8/8/8/8/8/8/8/4K3 w - - 0 1',
+);
 
 void main() {
   test('maps move categories deterministically', () {

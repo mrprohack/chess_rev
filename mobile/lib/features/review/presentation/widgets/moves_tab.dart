@@ -30,7 +30,9 @@ class MovesTab extends StatelessWidget {
         final selected = currentMoveIndex == moveIndex;
         return Material(
           color: selected
-              ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.45)
+              ? Theme.of(
+                  context,
+                ).colorScheme.primaryContainer.withValues(alpha: 0.45)
               : Colors.transparent,
           child: ListTile(
             dense: true,

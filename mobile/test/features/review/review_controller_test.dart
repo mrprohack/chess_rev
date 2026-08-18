@@ -25,15 +25,24 @@ class FakeGameRepository implements GameRepository {
 }
 
 GameAnalysis fixtureGame() {
-  final json = jsonDecode(File('test/fixtures/chesscom_analysis.json').readAsStringSync()) as Map<String, dynamic>;
+  final json =
+      jsonDecode(
+            File('test/fixtures/chesscom_analysis.json').readAsStringSync(),
+          )
+          as Map<String, dynamic>;
   return GameAnalysis.fromJson(json);
 }
 
-ProviderContainer makeContainer(FakeGameRepository repository, MemoryLocalCache cache) {
-  return ProviderContainer(overrides: [
-    gameRepositoryProvider.overrideWithValue(repository),
-    localCacheProvider.overrideWithValue(cache),
-  ]);
+ProviderContainer makeContainer(
+  FakeGameRepository repository,
+  MemoryLocalCache cache,
+) {
+  return ProviderContainer(
+    overrides: [
+      gameRepositoryProvider.overrideWithValue(repository),
+      localCacheProvider.overrideWithValue(cache),
+    ],
+  );
 }
 
 void main() {
@@ -43,7 +52,9 @@ void main() {
     final container = makeContainer(repository, cache);
     addTearDown(container.dispose);
 
-    await container.read(reviewControllerProvider.notifier).analyzeUrl('https://lichess.org/abcdefgh');
+    await container
+        .read(reviewControllerProvider.notifier)
+        .analyzeUrl('https://lichess.org/abcdefgh');
 
     final state = container.read(reviewControllerProvider);
     expect(state.game?.white, 'Alpha');

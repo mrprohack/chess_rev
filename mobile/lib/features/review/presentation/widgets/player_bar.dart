@@ -22,7 +22,9 @@ class PlayerBar extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 15,
-            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+            backgroundColor: Theme.of(
+              context,
+            ).colorScheme.surfaceContainerHighest,
             child: Text(name.isEmpty ? '?' : name[0].toUpperCase()),
           ),
           const SizedBox(width: 9),

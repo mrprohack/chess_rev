@@ -44,7 +44,9 @@ class ChessBoardView extends StatelessWidget {
           final boardSize = constraints.maxWidth;
           final squareSize = boardSize / 8;
           return TweenAnimationBuilder<double>(
-            key: ValueKey(move?.fen ?? '${position.pieces.length}-$flipped-$boardTheme'),
+            key: ValueKey(
+              move?.fen ?? '${position.pieces.length}-$flipped-$boardTheme',
+            ),
             tween: Tween(begin: 0, end: 1),
             duration: transition == null
                 ? Duration.zero
@@ -174,7 +176,8 @@ class ChessBoardView extends StatelessWidget {
 
   int _columnFor(BoardSquare square) => flipped ? 7 - square.file : square.file;
 
-  int _rowFor(BoardSquare square) => flipped ? square.rank - 1 : 8 - square.rank;
+  int _rowFor(BoardSquare square) =>
+      flipped ? square.rank - 1 : 8 - square.rank;
 
   String _assetFor(BoardPiece piece) {
     final color = piece.color == PieceColor.white ? 'w' : 'b';

@@ -16,13 +16,13 @@ GameMove move(String uci, String fen, {String notation = 'move'}) {
 
 void main() {
   test('derives normal move and capture', () {
-    final before = BoardPosition.fromFen(
-      '8/8/8/8/8/8/4P3/4K3 w - - 0 1',
+    final before = BoardPosition.fromFen('8/8/8/8/8/8/4P3/4K3 w - - 0 1');
+    final after = BoardPosition.fromFen('8/8/8/8/4P3/8/8/4K3 b - - 0 1');
+    final normal = deriveTransition(
+      before,
+      after,
+      move('e2e4', afterFen(after)),
     );
-    final after = BoardPosition.fromFen(
-      '8/8/8/8/4P3/8/8/4K3 b - - 0 1',
-    );
-    final normal = deriveTransition(before, after, move('e2e4', afterFen(after)));
     expect(normal.type, MoveTransitionType.normal);
     expect(normal.source.algebraic, 'e2');
     expect(normal.destination.algebraic, 'e4');
@@ -30,9 +30,7 @@ void main() {
     final captureBefore = BoardPosition.fromFen(
       '8/8/8/3p4/4P3/8/8/4K3 w - - 0 1',
     );
-    final captureAfter = BoardPosition.fromFen(
-      '8/8/8/3P4/8/8/8/4K3 b - - 0 1',
-    );
+    final captureAfter = BoardPosition.fromFen('8/8/8/3P4/8/8/8/4K3 b - - 0 1');
     final capture = deriveTransition(
       captureBefore,
       captureAfter,
@@ -46,11 +44,13 @@ void main() {
     final castleBefore = BoardPosition.fromFen(
       '4k3/8/8/8/8/8/8/4K2R w K - 0 1',
     );
-    final castleAfter = BoardPosition.fromFen(
-      '4k3/8/8/8/8/8/8/5RK1 b - - 1 1',
-    );
+    final castleAfter = BoardPosition.fromFen('4k3/8/8/8/8/8/8/5RK1 b - - 1 1');
     expect(
-      deriveTransition(castleBefore, castleAfter, move('e1g1', afterFen(castleAfter))).type,
+      deriveTransition(
+        castleBefore,
+        castleAfter,
+        move('e1g1', afterFen(castleAfter)),
+      ).type,
       MoveTransitionType.castle,
     );
 
@@ -69,13 +69,13 @@ void main() {
       MoveTransitionType.promotion,
     );
 
-    final epBefore = BoardPosition.fromFen(
-      '4k3/8/8/3pP3/8/8/8/4K3 w - d6 0 1',
+    final epBefore = BoardPosition.fromFen('4k3/8/8/3pP3/8/8/8/4K3 w - d6 0 1');
+    final epAfter = BoardPosition.fromFen('4k3/8/3P4/8/8/8/8/4K3 b - - 0 1');
+    final ep = deriveTransition(
+      epBefore,
+      epAfter,
+      move('e5d6', afterFen(epAfter)),
     );
-    final epAfter = BoardPosition.fromFen(
-      '4k3/8/3P4/8/8/8/8/4K3 b - - 0 1',
-    );
-    final ep = deriveTransition(epBefore, epAfter, move('e5d6', afterFen(epAfter)));
     expect(ep.type, MoveTransitionType.enPassant);
     expect(ep.capturedSquare?.algebraic, 'd5');
   });

@@ -79,7 +79,8 @@ class BoardPosition {
         pieces[BoardSquare(file: file, rank: rank)] = piece;
         file += 1;
       }
-      if (file != 8) throw const FormatException('Each FEN rank must contain 8 squares');
+      if (file != 8)
+        throw const FormatException('Each FEN rank must contain 8 squares');
     }
 
     if (fields[1] != 'w' && fields[1] != 'b') {

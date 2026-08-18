@@ -8,7 +8,9 @@ import '../../support/stub_http_adapter.dart';
 
 void main() {
   test('fetches encoded profile with requested limit', () async {
-    final fixture = File('test/fixtures/chesscom_profile.json').readAsStringSync();
+    final fixture = File(
+      'test/fixtures/chesscom_profile.json',
+    ).readAsStringSync();
     RequestOptions? captured;
     final dio = Dio(BaseOptions(baseUrl: 'https://api.reviewchess.in'));
     dio.httpClientAdapter = StubHttpAdapter((options) {
@@ -16,11 +18,15 @@ void main() {
       return ResponseBody.fromString(
         fixture,
         200,
-        headers: {Headers.contentTypeHeader: [Headers.jsonContentType]},
+        headers: {
+          Headers.contentTypeHeader: [Headers.jsonContentType],
+        },
       );
     });
 
-    final profile = await DioProfileRepository(dio).fetchProfile('Alpha User', limit: 20);
+    final profile = await DioProfileRepository(
+      dio,
+    ).fetchProfile('Alpha User', limit: 20);
 
     expect(captured?.method, 'GET');
     expect(captured?.path, '/api/chesscom/profile/Alpha%20User');

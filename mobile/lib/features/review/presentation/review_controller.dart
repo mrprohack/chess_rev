@@ -9,9 +9,8 @@ import '../../settings/presentation/settings_controller.dart';
 import '../data/game_repository.dart';
 import 'review_state.dart';
 
-final reviewControllerProvider = NotifierProvider<ReviewController, ReviewState>(
-  ReviewController.new,
-);
+final reviewControllerProvider =
+    NotifierProvider<ReviewController, ReviewState>(ReviewController.new);
 
 class ReviewController extends Notifier<ReviewState> {
   Timer? _autoplayTimer;
@@ -49,7 +48,9 @@ class ReviewController extends Notifier<ReviewState> {
     );
 
     try {
-      final game = await ref.read(gameRepositoryProvider).analyzeGame(
+      final game = await ref
+          .read(gameRepositoryProvider)
+          .analyzeGame(
             AnalyzeGameRequest(
               url: normalizedUrl,
               depth: settings.engineDepth,

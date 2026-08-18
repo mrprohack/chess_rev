@@ -4,7 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:reviewchess/app/app.dart';
 
 void main() {
-  testWidgets('starts on Review with three primary destinations', (tester) async {
+  testWidgets('starts on Review with three primary destinations', (
+    tester,
+  ) async {
     await tester.pumpWidget(const ProviderScope(child: ReviewChessApp()));
     await tester.pumpAndSettle();
     expect(find.text('Review'), findsWidgets);

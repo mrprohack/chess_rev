@@ -23,13 +23,13 @@ class AnalyzeGameRequest {
   final int threads;
 
   Map<String, dynamic> toJson() => {
-        'url': url,
-        'depth': depth,
-        'engine': engine,
-        'maxTime': maxTime,
-        'numLines': numLines,
-        'threads': threads,
-      };
+    'url': url,
+    'depth': depth,
+    'engine': engine,
+    'maxTime': maxTime,
+    'numLines': numLines,
+    'threads': threads,
+  };
 }
 
 abstract interface class GameRepository {

@@ -7,7 +7,9 @@ import 'package:reviewchess/features/settings/presentation/settings_controller.d
 void main() {
   test('persists settings updates and reset', () async {
     final store = MemoryPreferencesStore();
-    final container = ProviderContainer(overrides: [preferencesStoreProvider.overrideWithValue(store)]);
+    final container = ProviderContainer(
+      overrides: [preferencesStoreProvider.overrideWithValue(store)],
+    );
     addTearDown(container.dispose);
     final notifier = container.read(settingsProvider.notifier);
     await notifier.setReduceMotion(true);

@@ -4,14 +4,34 @@ import 'package:reviewchess/features/review/presentation/widgets/playback_dock.d
 
 void main() {
   testWidgets('keeps seven 48dp playback actions visible', (tester) async {
-    await tester.pumpWidget(MaterialApp(home: Scaffold(body: PlaybackDock(
-      currentMove: 0,
-      totalMoves: 10,
-      keyMoments: 2,
-      isPlaying: false,
-      onShare: () {}, onFirst: null, onPrevious: null, onPlayPause: () {}, onNext: () {}, onLast: () {}, onFlip: () {},
-    ))));
-    for (final label in ['Share','First','Previous','Play','Next','Last','Flip']) {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PlaybackDock(
+            currentMove: 0,
+            totalMoves: 10,
+            keyMoments: 2,
+            isPlaying: false,
+            onShare: () {},
+            onFirst: null,
+            onPrevious: null,
+            onPlayPause: () {},
+            onNext: () {},
+            onLast: () {},
+            onFlip: () {},
+          ),
+        ),
+      ),
+    );
+    for (final label in [
+      'Share',
+      'First',
+      'Previous',
+      'Play',
+      'Next',
+      'Last',
+      'Flip',
+    ]) {
       final finder = find.bySemanticsLabel(label);
       expect(finder, findsOneWidget);
       final size = tester.getSize(finder);

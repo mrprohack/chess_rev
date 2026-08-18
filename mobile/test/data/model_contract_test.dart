@@ -6,8 +6,16 @@ import 'package:reviewchess/data/models/game_analysis.dart';
 
 void main() {
   test('decodes documented analysis and profile contracts', () {
-    final analysisJson = jsonDecode(File('test/fixtures/chesscom_analysis.json').readAsStringSync()) as Map<String, dynamic>;
-    final profileJson = jsonDecode(File('test/fixtures/chesscom_profile.json').readAsStringSync()) as Map<String, dynamic>;
+    final analysisJson =
+        jsonDecode(
+              File('test/fixtures/chesscom_analysis.json').readAsStringSync(),
+            )
+            as Map<String, dynamic>;
+    final profileJson =
+        jsonDecode(
+              File('test/fixtures/chesscom_profile.json').readAsStringSync(),
+            )
+            as Map<String, dynamic>;
     final analysis = GameAnalysis.fromJson(analysisJson);
     final profile = ChessComProfile.fromJson(profileJson);
     expect(analysis.moves.first.fen, isNotEmpty);

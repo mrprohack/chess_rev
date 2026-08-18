@@ -17,7 +17,10 @@ class FakeProfileRepository implements ProfileRepository {
   int? lastLimit;
 
   @override
-  Future<ChessComProfile> fetchProfile(String username, {int limit = 12}) async {
+  Future<ChessComProfile> fetchProfile(
+    String username, {
+    int limit = 12,
+  }) async {
     lastLimit = limit;
     if (failure != null) throw failure!;
     return profile;
@@ -32,13 +35,15 @@ void main() {
       profile: fixtureProfile(),
       failure: const OfflineFailure(),
     );
-    final container = ProviderContainer(overrides: [
-      localCacheProvider.overrideWithValue(cache),
-      profileRepositoryProvider.overrideWithValue(repository),
-      initialSettingsProvider.overrideWithValue(
-        AppSettings.defaults().copyWith(chessComUsername: 'Alpha'),
-      ),
-    ]);
+    final container = ProviderContainer(
+      overrides: [
+        localCacheProvider.overrideWithValue(cache),
+        profileRepositoryProvider.overrideWithValue(repository),
+        initialSettingsProvider.overrideWithValue(
+          AppSettings.defaults().copyWith(chessComUsername: 'Alpha'),
+        ),
+      ],
+    );
     addTearDown(container.dispose);
 
     await container.read(historyControllerProvider.notifier).load();
@@ -52,18 +57,26 @@ void main() {
     final cache = MemoryLocalCache();
     final fresh = fixtureProfile();
     final repository = FakeProfileRepository(profile: fresh);
-    final container = ProviderContainer(overrides: [
-      localCacheProvider.overrideWithValue(cache),
-      profileRepositoryProvider.overrideWithValue(repository),
-      initialSettingsProvider.overrideWithValue(
-        AppSettings.defaults().copyWith(chessComUsername: 'Alpha'),
-      ),
-    ]);
+    final container = ProviderContainer(
+      overrides: [
+        localCacheProvider.overrideWithValue(cache),
+        profileRepositoryProvider.overrideWithValue(repository),
+        initialSettingsProvider.overrideWithValue(
+          AppSettings.defaults().copyWith(chessComUsername: 'Alpha'),
+        ),
+      ],
+    );
     addTearDown(container.dispose);
 
     await container.read(historyControllerProvider.notifier).load();
-    expect(container.read(historyControllerProvider).profile?.username, 'Alpha');
-    expect(container.read(historyControllerProvider).isOfflineSnapshot, isFalse);
+    expect(
+      container.read(historyControllerProvider).profile?.username,
+      'Alpha',
+    );
+    expect(
+      container.read(historyControllerProvider).isOfflineSnapshot,
+      isFalse,
+    );
     expect((await cache.readProfile())?.username, 'Alpha');
   });
 }

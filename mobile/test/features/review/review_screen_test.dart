@@ -11,11 +11,14 @@ import '../../support/fixture_factory.dart';
 
 class UiGameRepository implements GameRepository {
   @override
-  Future<GameAnalysis> analyzeGame(AnalyzeGameRequest request) async => fixtureGameAnalysis();
+  Future<GameAnalysis> analyzeGame(AnalyzeGameRequest request) async =>
+      fixtureGameAnalysis();
 }
 
 void main() {
-  testWidgets('empty state analyzes URL into full review tabs and board', (tester) async {
+  testWidgets('empty state analyzes URL into full review tabs and board', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [

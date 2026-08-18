@@ -9,7 +9,9 @@ void main() {
     'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
   );
 
-  testWidgets('renders 32 local SVG pieces and flips board orientation', (tester) async {
+  testWidgets('renders 32 local SVG pieces and flips board orientation', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
