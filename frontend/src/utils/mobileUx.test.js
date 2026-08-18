@@ -48,21 +48,50 @@ test('uses phone-friendly touch sizing for review actions and move rows', () => 
   assert.match(css, /\.move-col[^}]*min-height:\s*48px;/s);
 });
 
-test('keeps a slim move-control dock at the true bottom without covering moves', () => {
+test('fills the mobile review viewport and keeps playback inside the panel', () => {
   const css = readMobileCss();
   assert.match(
     css,
-    /\.panel-footer\s*\{[^}]*position:\s*fixed;[^}]*left:\s*50%;[^}]*bottom:\s*env\(safe-area-inset-bottom\);[^}]*min-height:\s*(?:5[8-9]|60)px;/s,
-    'move controls should use a slim 58-60px bottom dock',
+    /\.layout-container\s*\{[^}]*padding-bottom:\s*0;/s,
+    'the page should not reserve fake space for a viewport-fixed playback dock',
   );
   assert.match(
     css,
-    /\.moves-list\s*\{[^}]*padding-bottom:\s*(?:7[2-9]|80)px;/s,
-    'the move list should reserve only enough space for the slimmer bottom dock',
+    /\.right-panel,\s*\.right-panel--motion\s*\{[^}]*height:\s*calc\(100dvh\s*-\s*54px\s*-\s*env\(safe-area-inset-top\)\);[^}]*min-height:\s*0;[^}]*max-height:\s*none;/s,
+    'the phone review panel should use the available viewport instead of stopping at 78dvh',
   );
   assert.match(
     css,
-    /\.play-control\s*\{[^}]*min-width:\s*5[0-6]px;[^}]*min-height:\s*44px;/s,
-    'play should remain visually strongest while the dock stays compact',
+    /\.panel-footer\s*\{[^}]*position:\s*sticky;[^}]*left:\s*auto;[^}]*bottom:\s*0;[^}]*transform:\s*none;[^}]*width:\s*100%;/s,
+    'playback should be an in-panel sticky footer rather than a viewport-fixed overlay',
+  );
+  assert.match(
+    css,
+    /\.moves-list\s*\{[^}]*min-height:\s*0;[^}]*padding-bottom:\s*[4-9]px;/s,
+    'the move list should flex-scroll naturally without a large fake footer reserve',
+  );
+});
+
+test('uses one balanced six-control playback row on mobile', () => {
+  const css = readMobileCss();
+  assert.match(
+    css,
+    /\.controls\s*\{[^}]*grid-template-columns:\s*repeat\(6,\s*minmax\(0,\s*1fr\)\);/s,
+    'First, Previous, Play, Next, Last, and Flip should share one balanced row',
+  );
+  assert.match(
+    css,
+    /\.controls-main\s*\{[^}]*display:\s*contents;/s,
+    'the nested playback group should participate in the six-column mobile grid',
+  );
+  assert.match(
+    css,
+    /\.control-btn:disabled\s*\{[^}]*opacity:\s*0?\.[23][0-9]?;/s,
+    'disabled navigation controls should remain visible but clearly subdued',
+  );
+  assert.match(
+    css,
+    /\.play-control\s*\{[^}]*min-width:\s*44px;[^}]*min-height:\s*44px;/s,
+    'play should remain touch-safe while fitting the balanced row',
   );
 });
