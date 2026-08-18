@@ -17,6 +17,11 @@
     min-height: 0;
     max-height: none;
     overflow: hidden;
+    /* App.css keeps a transform after the panel-in animation via fill-mode: both.
+       A transformed ancestor traps position: fixed descendants, so the footer was
+       fixed to this panel instead of the phone viewport. Remove that mobile-only. */
+    animation: none;
+    transform: none;
   }
 
   /* The move list remains the scrolling region and reserves enough room for the
