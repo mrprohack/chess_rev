@@ -94,4 +94,22 @@ void main() {
     await controller.toggleBookmark(2);
     expect(await cache.readBookmarks('https://lichess.org/abcdefgh'), [2]);
   });
+
+  test('manual move navigation stops autoplay', () async {
+    final container = makeContainer(
+      FakeGameRepository(fixtureGame()),
+      MemoryLocalCache(),
+    );
+    addTearDown(container.dispose);
+    final controller = container.read(reviewControllerProvider.notifier);
+    await controller.analyzeUrl('https://lichess.org/abcdefgh');
+
+    controller.startAutoplay();
+    expect(container.read(reviewControllerProvider).autoplayRunning, isTrue);
+
+    controller.nextMove();
+
+    expect(container.read(reviewControllerProvider).autoplayRunning, isFalse);
+    expect(container.read(reviewControllerProvider).currentMoveIndex, 1);
+  });
 }
