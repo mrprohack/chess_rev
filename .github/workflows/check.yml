@@ -73,6 +73,8 @@ jobs:
           cache: true
       - name: Install Flutter dependencies
         run: flutter pub get
+      - name: Show board formatter output
+        run: dart format --output=show lib/features/board/presentation/chess_board_view.dart
       - name: Format check
         run: dart format --output=none --set-exit-if-changed .
       - name: Analyze
