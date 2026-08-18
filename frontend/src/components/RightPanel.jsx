@@ -116,7 +116,7 @@ export default function RightPanel({
   }, [isPlaying, autoPlaySpeed, gameData, setCurrentMoveIndex]);
 
   const fetchGame = async (targetUrl) => {
-    const finalUrl = typeof targetUrl === 'string' ? targetUrl : url;
+    const finalUrl = (typeof targetUrl === 'string' ? targetUrl : url).trim();
     if (!finalUrl) return;
     setIsPlaying(false);
     setLoading(true);

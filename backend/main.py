@@ -83,6 +83,36 @@ class AnalyzeRequest(BaseModel):
     threads: int = Field(default=1, ge=1, le=32)
 
 
+LICHESS_NON_GAME_PATHS = {
+    "about", "analysis", "api", "blog", "broadcaster", "cam", "challenge",
+    "coach", "community", "editor", "feed", "forum", "from", "games", "help",
+    "mobile", "practice", "stream", "study", "swiss", "team", "top",
+    "tournament", "training", "tv", "video",
+}
+
+
+def _extract_lichess_game_id(parts) -> tuple[str, str]:
+    for part in parts:
+        if part in {"black", "white"}:
+            continue
+        if part in LICHESS_NON_GAME_PATHS:
+            continue
+        return "lichess", part
+    raise HTTPException(status_code=400, detail="Could not extract Lichess game ID")
+
+
+def _extract_chess_com_game_id(parts) -> tuple[str, str]:
+    for game_type in ("live", "daily"):
+        if game_type in parts:
+            index = parts.index(game_type) + 1
+            if index < len(parts):
+                return "chess.com", parts[index]
+    for part in parts:
+        if part.isdigit() and len(part) >= 6:
+            return "chess.com", part
+    raise HTTPException(status_code=400, detail="Could not extract Chess.com game ID")
+
+
 def parse_game_url(raw_url: str) -> tuple[str, str]:
     parsed = urlparse(raw_url.strip())
     host = (parsed.hostname or "").lower()
@@ -306,6 +336,7 @@ def fetch_chess_com_pgn(session: requests.Session, game_id: str) -> str:
 
 @app.post("/api/analyze")
 def analyze_game(req: AnalyzeRequest):
+    logger.info("Analyzing game from URL: %s", req.url)
     provider, game_id = parse_game_url(req.url)
     db = None
     try:
@@ -322,6 +353,7 @@ def analyze_game(req: AnalyzeRequest):
         db.commit()
         return game_data
     except HTTPException:
+        logger.warning("%s analysis failed for URL %s", provider, req.url)
         raise
     except requests.Timeout:
         raise HTTPException(status_code=504, detail="Chess provider timed out") from None
@@ -346,4 +378,5 @@ def analyze_game(req: AnalyzeRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", "8001")))
+

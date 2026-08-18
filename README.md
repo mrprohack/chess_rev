@@ -132,19 +132,48 @@ cp -r dist/* /var/www/reviewchess/
 
 ## Services (systemd)
 
-Both services auto-start on boot and restart on crash.
+Both services run as systemd units, auto-start on boot, and restart on crash. On this server the backend unit is `chess-backend` and nginx serves the frontend.
+
+### Quick Start
+
+```bash
+# Backend + frontend (nginx) together
+sudo systemctl start chess-backend nginx
+
+# Check everything is up
+sudo systemctl status chess-backend nginx
+```
+
+### Quick Restart
+
+```bash
+# Restart both after a deploy or config change
+sudo systemctl restart chess-backend nginx
+
+# Restart only the backend (after backend/ changes)
+sudo systemctl restart chess-backend
+```
 
 ### Backend Service
 
 ```bash
 # Status
-systemctl status chess-backend
+sudo systemctl status chess-backend
 
-# Restart
-systemctl restart chess-backend
+# Start / Stop / Restart
+sudo systemctl start chess-backend
+sudo systemctl stop chess-backend
+sudo systemctl restart chess-backend
 
-# View logs
+# Enable/disable auto-start on boot
+sudo systemctl enable chess-backend
+sudo systemctl disable chess-backend
+
+# View live logs
 journalctl -u chess-backend -f
+
+# View recent request/error log lines
+journalctl -u chess-backend -n 50
 ```
 
 Service file: `/etc/systemd/system/chess-backend.service`
@@ -153,19 +182,34 @@ Service file: `/etc/systemd/system/chess-backend.service`
 
 ```bash
 # Status
-systemctl status nginx
+sudo systemctl status nginx
 
-# Restart
-systemctl restart nginx
+# Start / Stop / Restart
+sudo systemctl start nginx
+sudo systemctl stop nginx
+sudo systemctl restart nginx
 
-# Reload config
-systemctl reload nginx
+# Reload config (no downtime)
+sudo systemctl reload nginx
 ```
+
+### After a Code Change
+
+1. **Backend** — the process must be restarted to pick up edits:
+   ```bash
+   sudo systemctl restart chess-backend
+   ```
+2. **Frontend** — rebuild the static bundle, then nginx picks it up automatically (no restart needed, but a reload is harmless):
+   ```bash
+   cd frontend
+   npm run build
+   sudo cp -r dist/* /var/www/reviewchess/
+   ```
 
 ### Full Restart
 
 ```bash
-systemctl restart chess-backend nginx
+sudo systemctl restart chess-backend nginx
 ```
 
 ## API Reference

@@ -45,6 +45,47 @@ class TestGameUrlParsing(unittest.TestCase):
             ("chess.com", "170804338698"),
         )
 
+    def test_parses_lichess_id_with_color_suffix(self):
+        self.assertEqual(
+            self.parse("https://lichess.org/abcdefgh/white"),
+            ("lichess", "abcdefgh"),
+        )
+
+    def test_parses_lichess_analysis_url(self):
+        self.assertEqual(
+            self.parse("https://lichess.org/analysis/abcdefgh"),
+            ("lichess", "abcdefgh"),
+        )
+
+    def test_parses_lichess_url_with_leading_trailing_whitespace(self):
+        self.assertEqual(
+            self.parse("  https://lichess.org/abcdefgh/black\n"),
+            ("lichess", "abcdefgh"),
+        )
+
+    def test_parses_uppercase_provider_host(self):
+        self.assertEqual(
+            self.parse("https://Lichess.org/abcdefgh"),
+            ("lichess", "abcdefgh"),
+        )
+
+    def test_parses_chess_com_daily_game_id(self):
+        self.assertEqual(
+            self.parse("https://www.chess.com/game/daily/170804338698"),
+            ("chess.com", "170804338698"),
+        )
+
+    def test_parses_chess_com_digit_id_without_live_daily(self):
+        self.assertEqual(
+            self.parse("https://www.chess.com/game/170804338698"),
+            ("chess.com", "170804338698"),
+        )
+
+    def test_rejects_lichess_url_without_game_id(self):
+        with self.assertRaises(HTTPException) as caught:
+            self.parse("https://lichess.org/")
+        self.assertEqual(caught.exception.status_code, 400)
+
     def test_rejects_deceptive_provider_hostname(self):
         with self.assertRaises(HTTPException) as caught:
             self.parse("https://chess.com.attacker.example/game/live/123")

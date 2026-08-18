@@ -89,6 +89,8 @@ When starting services, print both local URLs. The backend binds to `0.0.0.0:800
 
 - Validate request bounds at the Pydantic boundary.
 - Parse provider URLs with `parse_game_url`; do not reintroduce substring-only provider checks.
+- `parse_game_url` tolerates whitespace, mixed-case hosts, color suffixes (`/<id>/black|white`), Lichess analysis paths, and Chess.com daily game IDs. Keep extraction helpers per provider behind `_extract_*_game_id`.
+- `analyze_game` logs every analyzed URL and warning-level failures with the triggering URL so frontend 404s are diagnosable from `journalctl -u chess-backend`.
 - Lichess fetches a direct PGN export. Chess.com fetches callback metadata, then the monthly archive.
 - Keep provider HTTP, timeout, engine, and internal failures mapped to stable FastAPI `detail` messages; do not expose raw exceptions to clients.
 - `parse_pgn` owns the Stockfish process and must always close it. Reuse the post-move evaluation as the next pre-move evaluation; do not restore duplicate engine analysis.
@@ -115,6 +117,10 @@ When starting services, print both local URLs. The backend binds to `0.0.0.0:800
 - Plain React JSX; no TypeScript or client state library.
 - Keep application state lifted in `frontend/src/App.jsx`.
 - `App.jsx` owns `activeView` (`review` or `history`) and the Review-panel visibility state; do not add a routing dependency for these two views.
+- `SettingsModal` is loaded lazily via `React.lazy`/`Suspense`; keep factory-first imports for on-demand components.
+- Vendor code is split into cacheable chunks via `manualChunks` in `vite.config.js` (react, icons, chess, vendor).
+- Production static assets are deployed to `/var/www/reviewchess` behind nginx with `immutable` cache headers for hashed files.
+- Production access happens through the provider's edge proxy (AIC Cloud Caddy); raw ports are firewalled from the internet. Public URLs: `https://test.reviewchess.in` (frontend, nginx port 8000), `https://api.reviewchess.in` and `https://testapi.reviewchess.in` (backend via nginx ports 8001/8002/80, proxying to systemd `chess-backend` on internal port 9003). Build the frontend with `VITE_API_URL=https://api.reviewchess.in`.
 - Use existing CSS custom properties and theme handling instead of adding a styling framework.
 - `ChessBoard.jsx` uses image-based pieces from `/pieces_alt/` and replay helpers from `src/utils/boardMotion.js`; preserve stable piece identity across animation changes.
 - One-ply replay should use the exact backend `played_move` UCI transition. FEN synchronization remains the fallback for jumps, initialization, and recovery.
