@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../board/domain/board_position.dart';
 import '../../board/presentation/chess_board_view.dart';
 import '../../settings/presentation/settings_controller.dart';
+import 'move_sound_service.dart';
 import 'review_controller.dart';
 import 'review_state.dart';
 import 'widgets/analysis_tab.dart';
@@ -53,6 +54,21 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(reviewControllerProvider);
     final controller = ref.read(reviewControllerProvider.notifier);
+
+    ref.listen<int>(
+      reviewControllerProvider.select((value) => value.currentMoveIndex),
+      (previous, next) {
+        if (next < 1 || previous == next) return;
+        final review = ref.read(reviewControllerProvider);
+        final game = review.game;
+        if (game == null || next > game.moves.length) return;
+        ref.read(moveSoundPlayerProvider).play(
+              game.moves[next - 1],
+              ref.read(settingsProvider),
+            );
+      },
+    );
+
     if (state.game == null) {
       return SafeArea(
         child: Column(
@@ -71,9 +87,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
               child: ReviewEmptyState(
                 controller: _urlController,
                 loading: state.isLoading,
-                onAnalyze: _urlController.text.trim().isEmpty
-                    ? () => controller.analyzeUrl(_urlController.text)
-                    : () => controller.analyzeUrl(_urlController.text),
+                onAnalyze: () => controller.analyzeUrl(_urlController.text),
                 onHistory: () {
                   try {
                     context.go('/history');
@@ -144,6 +158,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                                       flipped: state.boardFlipped,
                                       showCoordinates: settings.showCoordinates,
                                       reduceMotion: settings.reduceMotion,
+                                      boardTheme: settings.boardTheme,
                                     ),
                                   ),
                                   const SizedBox(width: gap),
