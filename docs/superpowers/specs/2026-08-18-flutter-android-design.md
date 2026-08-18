@@ -1,7 +1,7 @@
 # ReviewChess Flutter Android App Design
 
 **Date:** 2026-08-18  
-**Status:** Approved design, pending final written-spec review  
+**Status:** Implemented in PR #5  
 **Repository:** `mrprohack/chess_rev`  
 **Mobile location:** `mobile/`  
 **Application ID:** `com.reviewchess.app`  
