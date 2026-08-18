@@ -92,25 +92,30 @@
     text-overflow: ellipsis;
   }
 
-  .review-btn,
-  .controls > .control-btn:first-child {
+  .review-btn {
     display: none;
   }
 
-  /* The nested five playback buttons participate directly in the six-column
-     parent grid, with Flip as the sixth equal-width action. */
+  /* Share + five playback actions + Flip stay visible in one bottom row. */
   .controls {
     min-width: 0;
     width: 100%;
     height: 44px;
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     align-items: center;
     gap: 4px;
   }
 
   .controls-main {
     display: contents;
+  }
+
+  .controls > .control-btn:first-child {
+    display: flex;
+    width: 100%;
+    min-width: 44px;
+    flex: initial;
   }
 
   .control-btn {
@@ -185,13 +190,13 @@
 
   .panel-footer {
     width: 100%;
-    padding-inline: 5px;
+    padding-inline: 3px;
     border-inline: 0;
     border-radius: 10px 10px 0 0;
   }
 
   .controls {
-    gap: 2px;
+    gap: 1px;
   }
 
   .control-btn {
@@ -214,7 +219,7 @@
   }
 
   .controls {
-    gap: 2px;
+    gap: 1px;
   }
 }
 
