@@ -2,7 +2,7 @@ name: Check
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ "main", "master", "feature/flutter-android-v1" ]
   pull_request:
     branches: [ "main", "master" ]
 
@@ -14,33 +14,24 @@ jobs:
         working-directory: frontend
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-
       - name: Install dependencies
         run: npm install
-
       - name: Unit tests
         run: npm run test:unit
-
       - name: Lint
         run: npm run lint
-
       - name: Build
         run: npm run build
-
       - name: Install browser test runtime
         run: npm install --no-save @playwright/test@1.55.0
-
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-
       - name: Mobile browser regression
         run: npx playwright test e2e/mobile-footer.spec.js --config=playwright.config.js
-
       - name: Upload mobile footer screenshots
         if: always()
         uses: actions/upload-artifact@v4
@@ -57,17 +48,38 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
       - name: Install backend dependencies
         run: pip install -r requirements.txt
-
       - name: Check syntax
         run: python -m py_compile *.py
-
       - name: Run regression tests
         run: python -m unittest test_main.py test_chesscom_profile.py -v
+
+  mobile:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install Flutter dependencies
+        run: flutter pub get
+      - name: Format check
+        run: dart format --output=none --set-exit-if-changed .
+      - name: Analyze
+        run: flutter analyze
+      - name: Tests
+        run: flutter test
+      - name: Bootstrap Android platform
+        run: bash tool/bootstrap_android.sh
+      - name: Build debug APK
+        run: flutter build apk --debug
