@@ -49,10 +49,7 @@ class MovesTab extends StatelessWidget {
               ),
             ),
             title: Text(
-              displaySan(
-                move.notation,
-                figurineNotation: figurineNotation,
-              ),
+              displaySan(move.notation, figurineNotation: figurineNotation),
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             subtitle: move.time == null ? null : Text(move.time!),
