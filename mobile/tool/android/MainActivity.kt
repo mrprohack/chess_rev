@@ -22,11 +22,25 @@ class MainActivity : FlutterActivity() {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, methodChannelName)
             .setMethodCallHandler { call, result ->
-                if (call.method == "getInitialSharedText") {
-                    result.success(initialSharedText)
-                    initialSharedText = null
-                } else {
-                    result.notImplemented()
+                when (call.method) {
+                    "getInitialSharedText" -> {
+                        result.success(initialSharedText)
+                        initialSharedText = null
+                    }
+                    "shareText" -> {
+                        val text = call.argument<String>("text")?.trim()
+                        if (text.isNullOrEmpty()) {
+                            result.success(false)
+                        } else {
+                            val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_TEXT, text)
+                            }
+                            startActivity(Intent.createChooser(sendIntent, "Share game"))
+                            result.success(true)
+                        }
+                    }
+                    else -> result.notImplemented()
                 }
             }
         EventChannel(flutterEngine.dartExecutor.binaryMessenger, eventChannelName)
@@ -34,6 +48,7 @@ class MainActivity : FlutterActivity() {
                 override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
                     eventSink = events
                 }
+
                 override fun onCancel(arguments: Any?) {
                     eventSink = null
                 }
