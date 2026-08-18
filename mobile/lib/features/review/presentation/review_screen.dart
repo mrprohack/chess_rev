@@ -119,29 +119,45 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                 Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 520),
-                    child: GestureDetector(
-                      onHorizontalDragEnd: (details) {
-                        final velocity = details.primaryVelocity ?? 0;
-                        if (velocity < -250) controller.nextMove();
-                        if (velocity > 250) controller.previousMove();
-                      },
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(
-                            child: ChessBoardView(
-                              position: currentPosition,
-                              previousPosition: previousPosition,
-                              move: currentMove,
-                              flipped: state.boardFlipped,
-                              showCoordinates: settings.showCoordinates,
-                              reduceMotion: settings.reduceMotion,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        const evaluationWidth = 8.0;
+                        const gap = 5.0;
+                        final boardSize = constraints.maxWidth - evaluationWidth - gap;
+                        return SizedBox(
+                          height: boardSize,
+                          child: GestureDetector(
+                            onHorizontalDragEnd: (details) {
+                              final velocity = details.primaryVelocity ?? 0;
+                              if (velocity < -250) controller.nextMove();
+                              if (velocity > 250) controller.previousMove();
+                            },
+                            child: Row(
+                              children: [
+                                SizedBox.square(
+                                  dimension: boardSize,
+                                  child: ChessBoardView(
+                                    position: currentPosition,
+                                    previousPosition: previousPosition,
+                                    move: currentMove,
+                                    flipped: state.boardFlipped,
+                                    showCoordinates: settings.showCoordinates,
+                                    reduceMotion: settings.reduceMotion,
+                                  ),
+                                ),
+                                const SizedBox(width: gap),
+                                SizedBox(
+                                  width: evaluationWidth,
+                                  height: boardSize,
+                                  child: EvaluationBar(
+                                    evaluation: currentMove?.evaluation,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(width: 5),
-                          EvaluationBar(evaluation: currentMove?.evaluation),
-                        ],
-                      ),
+                        );
+                      },
                     ),
                   ),
                 ),
