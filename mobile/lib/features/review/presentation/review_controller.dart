@@ -84,13 +84,19 @@ class ReviewController extends Notifier<ReviewState> {
     }
   }
 
-  void firstMove() => _selectMove(0);
-  void previousMove() => _selectMove(state.currentMoveIndex - 1);
-  void nextMove() => _selectMove(state.currentMoveIndex + 1);
-  void lastMove() => _selectMove(state.game?.moves.length ?? 0);
-  void selectMove(int index) => _selectMove(index);
+  void firstMove() => _selectMove(0, cancelAutoplay: true);
+  void previousMove() =>
+      _selectMove(state.currentMoveIndex - 1, cancelAutoplay: true);
+  void nextMove() =>
+      _selectMove(state.currentMoveIndex + 1, cancelAutoplay: true);
+  void lastMove() =>
+      _selectMove(state.game?.moves.length ?? 0, cancelAutoplay: true);
+  void selectMove(int index) => _selectMove(index, cancelAutoplay: true);
 
-  void _selectMove(int requestedIndex) {
+  void _selectMove(int requestedIndex, {bool cancelAutoplay = false}) {
+    if (cancelAutoplay) {
+      stopAutoplay();
+    }
     final max = state.game?.moves.length ?? 0;
     final next = requestedIndex.clamp(0, max);
     if (next == state.currentMoveIndex) return;
