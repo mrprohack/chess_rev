@@ -25,33 +25,33 @@
   .layout-container {
     min-height: 100dvh;
     height: auto;
-    padding-bottom: calc(72px + env(safe-area-inset-bottom));
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
   }
 
   .main-content {
     width: 100%;
     max-width: none;
-    min-height: calc(100dvh - 72px - env(safe-area-inset-bottom));
-    padding: 12px clamp(8px, 2.8vw, 16px) 20px;
+    min-height: calc(100dvh - 58px - env(safe-area-inset-top));
+    padding: calc(70px + env(safe-area-inset-top)) clamp(8px, 2.8vw, 16px) 84px;
     gap: 14px;
     overflow: visible;
   }
 
-  /* Put the four primary actions in the thumb zone instead of a floating top-right cluster. */
+  /* Keep page navigation small and out of the playback thumb zone. */
   .sidebar {
     position: fixed;
     left: 0;
     right: 0;
-    top: auto;
-    bottom: 0;
+    top: 0;
+    bottom: auto;
     z-index: 300;
     width: 100%;
-    height: calc(72px + env(safe-area-inset-bottom));
-    padding: 7px 10px calc(7px + env(safe-area-inset-bottom));
+    height: calc(58px + env(safe-area-inset-top));
+    padding: calc(6px + env(safe-area-inset-top)) 8px 6px;
     border: 0;
-    border-top: 1px solid var(--glass-border);
-    background: color-mix(in srgb, var(--bg-surface) 94%, transparent);
-    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.24);
+    border-bottom: 1px solid var(--glass-border);
+    background: color-mix(in srgb, var(--bg-surface) 95%, transparent);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     backdrop-filter: blur(20px);
   }
 
@@ -61,24 +61,25 @@
 
   .sidebar-nav-list {
     width: min(100%, 560px);
-    height: 100%;
+    height: 46px;
     margin: 0 auto;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    align-items: stretch;
+    align-items: center;
     gap: 4px;
   }
 
   .sidebar-btn {
-    width: auto;
+    width: 100%;
     min-width: 0;
-    min-height: 48px;
-    height: 100%;
-    padding: 5px 4px;
+    min-height: 44px;
+    height: 44px;
+    padding: 5px 7px;
     border: 1px solid transparent;
-    border-radius: 12px;
-    flex-direction: column;
-    gap: 3px;
+    border-radius: 11px;
+    flex-direction: row;
+    justify-content: center;
+    gap: 5px;
     color: var(--text-60);
     background: transparent;
     box-shadow: none;
@@ -96,8 +97,9 @@
   }
 
   .sidebar-btn svg {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
   }
 
   .sidebar-btn:hover,
@@ -144,8 +146,8 @@
     width: 100%;
     min-width: 0;
     max-width: 640px;
-    height: min(70dvh, 640px);
-    min-height: 480px;
+    height: min(74dvh, 680px);
+    min-height: 500px;
     margin: 0;
     border-radius: 16px;
   }
@@ -183,8 +185,8 @@
 
   .moves-list {
     overscroll-behavior: contain;
-    scroll-padding-block: 12px 148px;
-    padding-bottom: 132px;
+    scroll-padding-block: 12px 96px;
+    padding-bottom: 88px;
   }
 
   .move-col {
@@ -192,57 +194,58 @@
     padding-block: 10px;
   }
 
-  /* Keep review playback reachable while scrolling, directly above the primary mobile navigation. */
+  /* Playback owns the true bottom thumb zone; progress is a thin status strip. */
   .panel-footer {
     position: fixed;
     left: 50%;
-    bottom: calc(72px + env(safe-area-inset-bottom));
+    bottom: env(safe-area-inset-bottom);
     z-index: 280;
     transform: translateX(-50%);
-    width: min(calc(100% - 24px), 640px);
+    width: min(calc(100% - 16px), 640px);
+    min-height: 66px;
     display: grid;
-    grid-template-columns: minmax(116px, auto) minmax(0, 1fr);
+    grid-template-rows: 14px 48px;
     align-items: center;
-    gap: 10px;
+    gap: 2px;
     margin: 0;
-    padding: 9px 10px;
+    padding: 3px 8px 5px;
     border: 1px solid var(--glass-border);
     border-bottom: 0;
-    border-radius: 16px 16px 0 0;
-    background: color-mix(in srgb, var(--bg-panel) 96%, transparent);
-    box-shadow: 0 -12px 34px rgba(0, 0, 0, 0.32);
+    border-radius: 14px 14px 0 0;
+    background: color-mix(in srgb, var(--bg-panel) 97%, transparent);
+    box-shadow: 0 -10px 28px rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(20px);
   }
 
   .move-progress {
     min-width: 0;
-    display: grid;
-    grid-template-columns: auto auto;
-    align-items: baseline;
-    justify-content: start;
-    column-gap: 6px;
-    row-gap: 1px;
+    width: 100%;
+    height: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
     white-space: nowrap;
+    line-height: 1;
   }
 
   .move-progress > span {
     color: var(--text-40);
-    font-size: 0.7rem;
-    font-weight: 700;
+    font-size: 0.58rem;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.05em;
   }
 
   .move-progress > strong {
     color: var(--text-100);
-    font-size: 0.92rem;
+    font-size: 0.76rem;
     font-variant-numeric: tabular-nums;
   }
 
   .move-progress > small {
-    grid-column: 1 / -1;
+    margin-left: auto;
     color: var(--green);
-    font-size: 0.66rem;
+    font-size: 0.6rem;
     overflow: hidden;
     text-overflow: ellipsis;
   }
@@ -254,47 +257,47 @@
   .controls {
     min-width: 0;
     width: 100%;
-    display: flex;
+    height: 48px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px;
     align-items: center;
-    justify-content: flex-end;
-    gap: 6px;
+    gap: 4px;
   }
 
-  /* Share is secondary during review; keep the dock focused on navigation and board orientation. */
+  /* Share is secondary while replaying; prioritize the move keys and board flip. */
   .controls > .control-btn:first-child {
     display: none;
   }
 
   .controls-main {
-    flex: 1;
+    min-width: 0;
+    width: 100%;
+    height: 48px;
     display: grid;
-    grid-template-columns: 44px 48px 56px 48px 44px;
-    justify-content: center;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    justify-content: stretch;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
   }
 
   .control-btn {
+    width: 100%;
     min-width: 44px;
     min-height: 44px;
-    padding: 9px;
-    border-radius: 12px;
-  }
-
-  .controls-main .control-btn:nth-child(2),
-  .controls-main .control-btn:nth-child(4) {
-    min-width: 48px;
-    min-height: 48px;
+    height: 44px;
+    padding: 8px;
+    border-radius: 11px;
   }
 
   .play-control {
-    min-width: 56px;
-    min-height: 56px;
-    border-radius: 16px;
+    min-width: 52px;
+    min-height: 48px;
+    height: 48px;
+    border-radius: 14px;
     color: var(--green);
-    background: rgba(74, 222, 128, 0.12);
-    border-color: rgba(74, 222, 128, 0.22);
-    box-shadow: 0 6px 18px rgba(34, 197, 94, 0.15);
+    background: rgba(74, 222, 128, 0.13);
+    border-color: rgba(74, 222, 128, 0.24);
+    box-shadow: 0 5px 16px rgba(34, 197, 94, 0.14);
   }
 
   .play-control:active {
@@ -303,6 +306,8 @@
 
   .controls > .control-btn:last-child {
     display: flex;
+    width: 44px;
+    min-width: 44px;
     flex: 0 0 44px;
   }
 
@@ -336,23 +341,35 @@
 
 @media (max-width: 560px) {
   .layout-container {
-    padding-bottom: calc(70px + env(safe-area-inset-bottom));
+    padding-bottom: calc(78px + env(safe-area-inset-bottom));
   }
 
   .main-content {
-    min-height: calc(100dvh - 70px - env(safe-area-inset-bottom));
-    padding: 8px 0 14px;
+    min-height: calc(100dvh - 58px - env(safe-area-inset-top));
+    padding: calc(64px + env(safe-area-inset-top)) 0 82px;
     gap: 10px;
   }
 
   .sidebar {
-    height: calc(70px + env(safe-area-inset-bottom));
-    padding-inline: 6px;
+    padding-inline: 5px;
+  }
+
+  .sidebar-nav-list {
+    gap: 2px;
   }
 
   .sidebar-btn {
-    border-radius: 10px;
+    min-height: 44px;
+    height: 44px;
+    padding-inline: 5px;
+    border-radius: 9px;
     font-size: 0.64rem;
+    gap: 4px;
+  }
+
+  .sidebar-btn svg {
+    width: 17px;
+    height: 17px;
   }
 
   .board-container {
@@ -391,8 +408,8 @@
   .right-panel,
   .right-panel--motion {
     max-width: none;
-    height: min(68dvh, 600px);
-    min-height: 460px;
+    height: min(76dvh, 680px);
+    min-height: 500px;
     border-inline: 0;
     border-radius: 16px 16px 0 0;
   }
@@ -441,7 +458,7 @@
   }
 
   .moves-list {
-    padding: 5px 6px 132px;
+    padding: 5px 6px 88px;
   }
 
   .move-row {
@@ -463,49 +480,43 @@
   }
 
   .panel-footer {
-    bottom: calc(70px + env(safe-area-inset-bottom));
     width: 100%;
-    grid-template-columns: 1fr;
-    gap: 6px;
-    padding: 7px 8px 9px;
+    min-height: 66px;
+    padding: 3px 6px 5px;
     border-inline: 0;
-    border-radius: 16px 16px 0 0;
+    border-radius: 13px 13px 0 0;
   }
 
   .move-progress {
-    width: 100%;
-    grid-template-columns: auto auto 1fr;
-    align-items: center;
-  }
-
-  .move-progress > small {
-    grid-column: auto;
-    justify-self: end;
+    padding-inline: 2px;
   }
 
   .controls {
-    width: 100%;
+    grid-template-columns: minmax(0, 1fr) 42px;
+    gap: 3px;
   }
 
   .controls-main {
-    grid-template-columns: minmax(40px, 1fr) minmax(44px, 1fr) 56px minmax(44px, 1fr) minmax(40px, 1fr);
-    gap: 4px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 3px;
   }
 
   .control-btn {
     width: 100%;
     min-width: 44px;
     min-height: 44px;
+    height: 44px;
   }
 
-  .controls-main .control-btn:first-child,
-  .controls-main .control-btn:last-child {
-    min-width: 40px;
+  .play-control {
+    min-width: 52px;
+    min-height: 48px;
+    height: 48px;
   }
 
   .controls > .control-btn:last-child {
-    display: flex;
-    flex: 0 0 44px;
+    width: 42px;
+    min-width: 42px;
   }
 
   .history-page {
@@ -569,6 +580,17 @@
 }
 
 @media (max-width: 420px) {
+  .sidebar-btn {
+    font-size: 0.6rem;
+    gap: 3px;
+    padding-inline: 3px;
+  }
+
+  .sidebar-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
   .url-input-row {
     display: grid;
     grid-template-columns: 1fr;
@@ -584,6 +606,27 @@
 
   .engine-status {
     font-size: 0.62rem;
+  }
+
+  .move-progress > span {
+    display: none;
+  }
+
+  .move-progress > strong {
+    font-size: 0.72rem;
+  }
+
+  .move-progress > small {
+    font-size: 0.56rem;
+  }
+
+  .panel-footer {
+    padding-inline: 5px;
+  }
+
+  .controls,
+  .controls-main {
+    gap: 2px;
   }
 
   .profile-input-row {
@@ -605,6 +648,10 @@
 }
 
 @media (max-width: 900px) and (max-height: 520px) and (orientation: landscape) {
+  .main-content {
+    padding-top: calc(56px + env(safe-area-inset-top));
+  }
+
   .right-panel,
   .right-panel--motion {
     height: 88dvh;
@@ -612,26 +659,47 @@
   }
 
   .sidebar {
-    height: calc(62px + env(safe-area-inset-bottom));
+    height: calc(52px + env(safe-area-inset-top));
+    padding-top: calc(4px + env(safe-area-inset-top));
+    padding-bottom: 4px;
+  }
+
+  .sidebar-nav-list {
+    height: 44px;
   }
 
   .sidebar-btn {
-    min-height: 46px;
+    min-height: 42px;
+    height: 42px;
   }
 
   .panel-footer {
-    bottom: calc(62px + env(safe-area-inset-bottom));
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 6px;
-    padding-block: 5px;
+    min-height: 58px;
+    grid-template-rows: 10px 44px;
+    padding-block: 2px;
+  }
+
+  .move-progress {
+    height: 10px;
   }
 
   .move-progress > small {
     display: none;
   }
 
+  .controls,
+  .controls-main {
+    height: 44px;
+  }
+
+  .control-btn {
+    min-height: 40px;
+    height: 40px;
+  }
+
   .play-control {
-    min-width: 52px;
-    min-height: 52px;
+    min-width: 50px;
+    min-height: 44px;
+    height: 44px;
   }
 }
