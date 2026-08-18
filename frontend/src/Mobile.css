@@ -183,7 +183,8 @@
 
   .moves-list {
     overscroll-behavior: contain;
-    scroll-padding-block: 12px 76px;
+    scroll-padding-block: 12px 148px;
+    padding-bottom: 132px;
   }
 
   .move-col {
@@ -191,20 +192,85 @@
     padding-block: 10px;
   }
 
+  /* Keep review playback reachable while scrolling, directly above the primary mobile navigation. */
   .panel-footer {
-    position: static;
-    padding: 10px 12px;
-    border-radius: 0;
-    box-shadow: none;
+    position: fixed;
+    left: 50%;
+    bottom: calc(72px + env(safe-area-inset-bottom));
+    z-index: 280;
+    transform: translateX(-50%);
+    width: min(calc(100% - 24px), 640px);
+    display: grid;
+    grid-template-columns: minmax(116px, auto) minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    padding: 9px 10px;
+    border: 1px solid var(--glass-border);
+    border-bottom: 0;
+    border-radius: 16px 16px 0 0;
+    background: color-mix(in srgb, var(--bg-panel) 96%, transparent);
+    box-shadow: 0 -12px 34px rgba(0, 0, 0, 0.32);
+    backdrop-filter: blur(20px);
+  }
+
+  .move-progress {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: auto auto;
+    align-items: baseline;
+    justify-content: start;
+    column-gap: 6px;
+    row-gap: 1px;
+    white-space: nowrap;
+  }
+
+  .move-progress > span {
+    color: var(--text-40);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .move-progress > strong {
+    color: var(--text-100);
+    font-size: 0.92rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .move-progress > small {
+    grid-column: 1 / -1;
+    color: var(--green);
+    font-size: 0.66rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .review-btn {
+    display: none;
   }
 
   .controls {
+    min-width: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
     gap: 6px;
+  }
+
+  /* Share is secondary during review; keep the dock focused on navigation and board orientation. */
+  .controls > .control-btn:first-child {
+    display: none;
   }
 
   .controls-main {
     flex: 1;
+    display: grid;
+    grid-template-columns: 44px 48px 56px 48px 44px;
     justify-content: center;
+    align-items: center;
     gap: 5px;
   }
 
@@ -212,6 +278,32 @@
     min-width: 44px;
     min-height: 44px;
     padding: 9px;
+    border-radius: 12px;
+  }
+
+  .controls-main .control-btn:nth-child(2),
+  .controls-main .control-btn:nth-child(4) {
+    min-width: 48px;
+    min-height: 48px;
+  }
+
+  .play-control {
+    min-width: 56px;
+    min-height: 56px;
+    border-radius: 16px;
+    color: var(--green);
+    background: rgba(74, 222, 128, 0.12);
+    border-color: rgba(74, 222, 128, 0.22);
+    box-shadow: 0 6px 18px rgba(34, 197, 94, 0.15);
+  }
+
+  .play-control:active {
+    transform: scale(0.96);
+  }
+
+  .controls > .control-btn:last-child {
+    display: flex;
+    flex: 0 0 44px;
   }
 
   .show-review-btn {
@@ -349,7 +441,7 @@
   }
 
   .moves-list {
-    padding: 5px 6px;
+    padding: 5px 6px 132px;
   }
 
   .move-row {
@@ -371,32 +463,44 @@
   }
 
   .panel-footer {
-    padding: 9px 8px 10px;
-    gap: 8px;
+    bottom: calc(70px + env(safe-area-inset-bottom));
+    width: 100%;
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 7px 8px 9px;
+    border-inline: 0;
+    border-radius: 16px 16px 0 0;
   }
 
-  .review-btn {
-    display: none;
+  .move-progress {
+    width: 100%;
+    grid-template-columns: auto auto 1fr;
+    align-items: center;
+  }
+
+  .move-progress > small {
+    grid-column: auto;
+    justify-self: end;
   }
 
   .controls {
     width: 100%;
   }
 
-  .controls > .control-btn:first-child {
-    display: none;
-  }
-
   .controls-main {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 5px;
+    grid-template-columns: minmax(40px, 1fr) minmax(44px, 1fr) 56px minmax(44px, 1fr) minmax(40px, 1fr);
+    gap: 4px;
   }
 
   .control-btn {
     width: 100%;
     min-width: 44px;
     min-height: 44px;
+  }
+
+  .controls-main .control-btn:first-child,
+  .controls-main .control-btn:last-child {
+    min-width: 40px;
   }
 
   .controls > .control-btn:last-child {
@@ -513,5 +617,21 @@
 
   .sidebar-btn {
     min-height: 46px;
+  }
+
+  .panel-footer {
+    bottom: calc(62px + env(safe-area-inset-bottom));
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 6px;
+    padding-block: 5px;
+  }
+
+  .move-progress > small {
+    display: none;
+  }
+
+  .play-control {
+    min-width: 52px;
+    min-height: 52px;
   }
 }
