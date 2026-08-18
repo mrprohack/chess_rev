@@ -43,10 +43,14 @@ void main() {
     expect(find.text('Opening'), findsOneWidget);
     expect(find.bySemanticsLabel('Play'), findsOneWidget);
 
+    await tester.ensureVisible(find.text('Analysis'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Analysis'));
     await tester.pump();
     expect(find.textContaining('White Accuracy'), findsOneWidget);
 
+    await tester.ensureVisible(find.text('Opening'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Opening'));
     await tester.pump();
     expect(find.text('Opening information unavailable'), findsOneWidget);
