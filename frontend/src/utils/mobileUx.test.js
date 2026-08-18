@@ -4,18 +4,24 @@ import test from 'node:test';
 
 const mainUrl = new URL('../main.jsx', import.meta.url);
 const mobileCssUrl = new URL('../Mobile.css', import.meta.url);
+const mobileReviewCssUrl = new URL('../MobileReview.css', import.meta.url);
 
 function readMobileCss() {
   assert.equal(existsSync(mobileCssUrl), true, 'Mobile.css should exist');
   return readFileSync(mobileCssUrl, 'utf8');
 }
 
-test('loads the mobile UX layer after the application module', () => {
+function readMobileReviewCss() {
+  assert.equal(existsSync(mobileReviewCssUrl), true, 'MobileReview.css should exist');
+  return readFileSync(mobileReviewCssUrl, 'utf8');
+}
+
+test('loads the mobile UX layers after the application module', () => {
   const mainSource = readFileSync(mainUrl, 'utf8');
   assert.match(
     mainSource,
-    /import App from '\.\/App\.jsx'\s*\nimport '\.\/Mobile\.css'/,
-    'Mobile.css should load after App.jsx so it can override only mobile presentation without rewriting desktop styles',
+    /import App from '\.\/App\.jsx'\s*\nimport '\.\/Mobile\.css'\s*\nimport '\.\/MobileReview\.css'/,
+    'Mobile review overrides should load after the base mobile UX layer',
   );
 });
 
@@ -42,14 +48,14 @@ test('keeps a minimal three-action mobile navigation at the top', () => {
 });
 
 test('uses phone-friendly touch sizing for review actions and move rows', () => {
-  const css = readMobileCss();
+  const css = `${readMobileCss()}\n${readMobileReviewCss()}`;
   assert.match(css, /\.analyze-btn[^}]*min-height:\s*48px;/s);
   assert.match(css, /\.control-btn[^}]*min-width:\s*44px;[^}]*min-height:\s*44px;/s);
   assert.match(css, /\.move-col[^}]*min-height:\s*48px;/s);
 });
 
 test('fills the mobile review viewport and keeps playback inside the panel', () => {
-  const css = readMobileCss();
+  const css = readMobileReviewCss();
   assert.match(
     css,
     /\.layout-container\s*\{[^}]*padding-bottom:\s*0;/s,
@@ -73,7 +79,7 @@ test('fills the mobile review viewport and keeps playback inside the panel', () 
 });
 
 test('uses one balanced six-control playback row on mobile', () => {
-  const css = readMobileCss();
+  const css = readMobileReviewCss();
   assert.match(
     css,
     /\.controls\s*\{[^}]*grid-template-columns:\s*repeat\(6,\s*minmax\(0,\s*1fr\)\);/s,
