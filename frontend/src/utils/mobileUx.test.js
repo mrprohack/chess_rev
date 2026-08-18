@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 
-const appUrl = new URL('../App.jsx', import.meta.url);
+const mainUrl = new URL('../main.jsx', import.meta.url);
 const mobileCssUrl = new URL('../Mobile.css', import.meta.url);
 
 function readMobileCss() {
@@ -10,12 +10,12 @@ function readMobileCss() {
   return readFileSync(mobileCssUrl, 'utf8');
 }
 
-test('loads the mobile UX layer after the existing app styles', () => {
-  const appSource = readFileSync(appUrl, 'utf8');
+test('loads the mobile UX layer after the application module', () => {
+  const mainSource = readFileSync(mainUrl, 'utf8');
   assert.match(
-    appSource,
-    /import '\.\/ReviewEnhancements\.css';\s*import '\.\/Mobile\.css';/,
-    'Mobile.css should be imported after ReviewEnhancements.css so mobile overrides win without changing desktop styles',
+    mainSource,
+    /import App from '\.\/App\.jsx'\s*\nimport '\.\/Mobile\.css'/,
+    'Mobile.css should load after App.jsx so it can override only mobile presentation without rewriting desktop styles',
   );
 });
 
