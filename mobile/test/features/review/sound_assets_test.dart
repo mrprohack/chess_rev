@@ -5,7 +5,14 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   test('all themed move sounds contain non-silent PCM samples', () {
     const themes = ['classic', 'soft', 'minimal'];
-    const sounds = ['move', 'capture', 'check', 'castle', 'promotion', 'game_end'];
+    const sounds = [
+      'move',
+      'capture',
+      'check',
+      'castle',
+      'promotion',
+      'game_end',
+    ];
 
     for (final theme in themes) {
       for (final sound in sounds) {
