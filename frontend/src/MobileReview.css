@@ -96,7 +96,8 @@
     display: none;
   }
 
-  /* Share + five playback actions + Flip stay visible in one bottom row. */
+  /* Keep the complete existing controls block visible at the mobile bottom:
+     Share + First + Previous + Play/Pause + Next + Last + Flip. */
   .controls {
     min-width: 0;
     width: 100%;
