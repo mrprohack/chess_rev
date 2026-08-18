@@ -298,7 +298,7 @@ The Flutter client uses typed models for backend responses. Core models include:
 
 Model decoding must tolerate backend fields that are optional today while rejecting structurally invalid required fields.
 
-The client should use generated JSON serialization and immutable typed models where practical.
+Use `freezed` for immutable model/state types and `json_serializable` for generated JSON decoding/encoding. Generated code must remain reproducible from source and checked by CI through normal analyze/test/build steps.
 
 ## 12. API Layer
 
@@ -322,7 +322,7 @@ The analyze request supports the existing engine configuration:
 
 Do not hardcode the production backend hostname in source files.
 
-Use a compile-time configuration value such as:
+Use a compile-time configuration value:
 
 ```text
 API_BASE_URL
@@ -429,7 +429,7 @@ If the currently analyzed game remains in process memory, it can continue to be 
 
 ## 16. Profile Cache Strategy
 
-History should use stale-while-refresh behavior:
+History uses stale-while-refresh behavior:
 
 1. load cached profile snapshot immediately;
 2. render it when available;
@@ -443,7 +443,7 @@ Offline UI must label cached information clearly rather than implying it is curr
 
 Support Android `ACTION_SEND` text sharing.
 
-The native Android layer receives shared text and passes it to Flutter through a small platform boundary. The Flutter sharing service extracts the first valid supported game URL, validates the hostname, then routes the URL through the same Review controller used by manual URL entry.
+The native Android layer receives shared text and passes it to Flutter through a small platform channel owned by this app. The Flutter sharing service extracts the first valid supported game URL, validates the hostname, then routes the URL through the same Review controller used by manual URL entry.
 
 Accepted provider hosts are exact Chess.com/Lichess domains or their legitimate subdomains. Deceptive hosts such as `chess.com.attacker.example` and `lichess.org.attacker.example` must be rejected.
 
@@ -462,7 +462,7 @@ If no valid game URL is present, show a concise error and do not call the backen
 
 ## 18. Deep Links
 
-Use `go_router` for route handling and a Flutter deep-link integration for incoming links.
+Use `go_router` for route handling and `app_links` for incoming application links.
 
 Support the custom application link form:
 
@@ -470,9 +470,9 @@ Support the custom application link form:
 reviewchess://review?url=<encoded-game-url>
 ```
 
-The design also permits verified HTTPS app links under a ReviewChess-owned domain later, without changing the internal review pipeline.
+The design also permits verified HTTPS app links under a ReviewChess-owned domain later, without changing the internal review pipeline. Verified HTTPS app links themselves are not required for V1.
 
-Both cold-start and warm-start deep-link paths must be tested.
+Both cold-start and warm-start custom deep-link paths must be tested.
 
 ## 19. Chessboard Architecture
 
@@ -489,7 +489,7 @@ ChessBoardView
 └── classification/effect layer
 ```
 
-Reuse the repository's chess piece artwork as bundled local assets where licensing and asset format permit. Do not load piece artwork over the network during normal review.
+Reuse the current repository SVG chess piece set as bundled local assets. If direct Flutter SVG loading requires asset conversion, convert the same artwork into a Flutter-compatible bundled representation without changing the visual piece set. Do not load piece artwork over the network during normal review.
 
 The board is a review surface, not a gameplay input surface. V1 does not support drag-to-play pieces.
 
@@ -545,21 +545,21 @@ Prominent visual effects are reserved for important classifications. Effects mus
 
 ## 23. Touch Interaction
 
-V1 board/review gestures:
+V1 board/review gestures are intentionally limited:
 
 - swipe left: next move;
 - swipe right: previous move;
-- optional board-flip gesture may be added only if it does not conflict with accessibility or scrolling;
 - long-press a move row: toggle bookmark;
-- piece dragging: disabled.
+- piece dragging: disabled;
+- board double-tap/gesture flip: not included in V1.
 
-The persistent Flip button is always the authoritative discoverable way to flip the board.
+The persistent Flip button is the single discoverable way to flip the board in V1.
 
 ## 24. Sound
 
-Move sounds are local assets and must not block rendering.
+Move sounds are bundled local assets and must not block rendering.
 
-Supported sound categories may include:
+V1 sound categories are:
 
 - normal move;
 - capture;
@@ -744,7 +744,7 @@ Flutter Android V1 is complete only when all of the following are true:
 - Settings persist across launches;
 - Bookmarks persist across launches;
 - Android Share Intent works;
-- deep-link cold and warm launches work;
+- custom deep-link cold and warm launches work;
 - approved lightweight data remains accessible offline;
 - offline/provider/rate-limit/timeout/server errors are handled deliberately;
 - touch targets and reduced-motion behavior meet the approved requirements;
@@ -762,6 +762,8 @@ The following are not part of this implementation unless separately approved lat
 - full analyzed-game offline persistence;
 - user accounts/authentication owned by ReviewChess;
 - playing/editing moves by dragging chess pieces;
+- board double-tap/gesture flip;
+- verified HTTPS Android App Links;
 - push notifications;
 - cloud bookmark synchronization;
 - subscriptions/payments;
@@ -770,6 +772,6 @@ The following are not part of this implementation unless separately approved lat
 
 ## 35. Implementation Principle
 
-The Android client should improve mobile usability without changing the backend's core responsibility. Manual URL entry, History selection, Android Share Intent, and deep links must all converge on the same validated review-analysis pipeline.
+The Android client should improve mobile usability without changing the backend's core responsibility. Manual URL entry, History selection, Android Share Intent, and custom deep links must all converge on the same validated review-analysis pipeline.
 
 The implementation should proceed feature-by-feature with tests written alongside behavior, preserving green backend/web CI throughout the mobile build.
