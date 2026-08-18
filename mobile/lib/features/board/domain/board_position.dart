@@ -54,9 +54,13 @@ class BoardPosition {
 
   factory BoardPosition.fromFen(String fen) {
     final fields = fen.trim().split(RegExp(r'\s+'));
-    if (fields.length < 4) throw const FormatException('Malformed FEN');
+    if (fields.length < 4) {
+      throw const FormatException('Malformed FEN');
+    }
     final ranks = fields[0].split('/');
-    if (ranks.length != 8) throw const FormatException('FEN must have 8 ranks');
+    if (ranks.length != 8) {
+      throw const FormatException('FEN must have 8 ranks');
+    }
 
     final pieces = <BoardSquare, BoardPiece>{};
     for (var row = 0; row < 8; row++) {
@@ -79,8 +83,9 @@ class BoardPosition {
         pieces[BoardSquare(file: file, rank: rank)] = piece;
         file += 1;
       }
-      if (file != 8)
+      if (file != 8) {
         throw const FormatException('Each FEN rank must contain 8 squares');
+      }
     }
 
     if (fields[1] != 'w' && fields[1] != 'b') {
@@ -109,7 +114,9 @@ BoardPiece? _pieceFromFenToken(String token) {
     'k' => PieceType.king,
     _ => null,
   };
-  if (type == null) return null;
+  if (type == null) {
+    return null;
+  }
   return BoardPiece(
     color: token == lower ? PieceColor.black : PieceColor.white,
     type: type,
