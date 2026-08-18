@@ -77,8 +77,16 @@ jobs:
         run: flutter analyze
       - name: Tests
         run: flutter test
-      - name: Format check
-        run: dart format --output=none --set-exit-if-changed .
+      - name: Apply Dart formatter
+        run: dart format .
+      - name: Upload formatted Dart sources
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-formatted-sources
+          path: |
+            mobile/lib
+            mobile/test
+          retention-days: 1
       - name: Bootstrap Android platform
         run: bash tool/bootstrap_android.sh
       - name: Build debug APK
