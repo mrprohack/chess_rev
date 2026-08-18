@@ -1,10 +1,8 @@
 /* Final mobile review-panel overrides.
-   Loaded after Mobile.css so this file can fix the review viewport and playback dock
-   without disturbing the rest of the mobile or desktop experience. */
+   Loaded after Mobile.css so this file can keep the review viewport and playback dock
+   stable without disturbing the rest of the mobile or desktop experience. */
 
 @media (max-width: 900px) {
-  /* The playback footer now lives inside the review panel, so the page no longer
-     needs synthetic bottom space for a viewport-fixed dock. */
   .layout-container {
     padding-bottom: 0;
   }
@@ -21,27 +19,27 @@
     overflow: hidden;
   }
 
-  /* The move list is the only scrolling region inside the review panel. */
+  /* The move list remains the scrolling region and reserves enough room for the
+     always-visible viewport dock so the final move never sits underneath it. */
   .moves-list {
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
-    scroll-padding-block: 10px;
-    padding-bottom: 6px;
+    scroll-padding-block: 10px calc(72px + env(safe-area-inset-bottom));
+    padding-bottom: calc(68px + env(safe-area-inset-bottom));
   }
 
-  /* Keep playback attached to the review panel rather than the viewport.
-     This prevents transformed/contained review panels from creating the large
-     blank area that appeared below the old fixed footer on phones. */
+  /* Keep the complete review controls visible at the real viewport bottom even
+     when the moves list or surrounding page scrolls. */
   .panel-footer {
-    position: sticky;
-    left: auto;
+    position: fixed;
+    left: 0;
+    right: 0;
     bottom: 0;
     transform: none;
     width: 100%;
-    z-index: 30;
+    z-index: 500;
     min-height: 60px;
-    flex: 0 0 auto;
     display: grid;
     grid-template-rows: 10px 44px;
     align-items: center;
@@ -186,7 +184,7 @@
   .moves-list {
     min-height: 0;
     padding: 5px 6px;
-    padding-bottom: 6px;
+    padding-bottom: calc(68px + env(safe-area-inset-bottom));
   }
 
   .panel-footer {
