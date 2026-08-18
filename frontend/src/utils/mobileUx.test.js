@@ -34,3 +34,22 @@ test('uses phone-friendly touch sizing for review actions and move rows', () => 
   assert.match(css, /\.control-btn[^}]*min-width:\s*44px;[^}]*min-height:\s*44px;/s);
   assert.match(css, /\.move-col[^}]*min-height:\s*48px;/s);
 });
+
+test('pins the mobile review controls above the primary navigation without covering moves', () => {
+  const css = readMobileCss();
+  assert.match(
+    css,
+    /\.panel-footer\s*\{[^}]*position:\s*fixed;[^}]*left:\s*50%;[^}]*bottom:\s*calc\(72px\s*\+\s*env\(safe-area-inset-bottom\)\);[^}]*z-index:\s*280;/s,
+    'the review footer should stay fixed in the thumb zone directly above the mobile app navigation',
+  );
+  assert.match(
+    css,
+    /\.moves-list\s*\{[^}]*padding-bottom:\s*1(?:2[0-9]|[3-9][0-9])px;/s,
+    'the move list should reserve enough space for the fixed review dock',
+  );
+  assert.match(
+    css,
+    /\.play-control\s*\{[^}]*min-width:\s*5[2-9]px;[^}]*min-height:\s*5[2-9]px;/s,
+    'auto-play should be the easiest playback action to hit on mobile',
+  );
+});
