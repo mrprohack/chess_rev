@@ -14,6 +14,22 @@ class ShareIntentBridge {
     }
   }
 
+  Future<bool> shareText(String text) async {
+    final normalized = text.trim();
+    if (normalized.isEmpty) return false;
+    try {
+      return await _methodChannel.invokeMethod<bool>(
+            'shareText',
+            <String, Object?>{'text': normalized},
+          ) ??
+          false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException {
+      return false;
+    }
+  }
+
   Stream<String> get sharedTextStream {
     return _eventChannel
         .receiveBroadcastStream()
